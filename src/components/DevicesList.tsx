@@ -1,33 +1,27 @@
 import { useState } from "react";
-import DeviceItem from "./DeviceItem";
 import AddDeviceModal from "./AddDeviceModal";
+import DeviceCard from "./DeviceCard";
 
 export default function DevicesList() {
   const [showModal, setShowModal] = useState(false);
-
-  const devices = [
-    {
-      name: "58105716 App (iPhone/iPad)",
-      date: "07.02.26",
-    },
-  ];
-
   return (
     <div className="card">
       <div className="devicesHeader">
         <div>
           <h3>Мои устройства</h3>
-          <p>Подключено: {devices.length}</p>
+          <p>Подключено: 1</p>
         </div>
 
-        <button className="addBtn" onClick={() => setShowModal(true)}>
+        <button className="addBtnPremium" onClick={() => setShowModal(true)}>
           Добавить
         </button>
       </div>
 
-      {devices.map((d, i) => (
-        <DeviceItem key={i} {...d} />
-      ))}
+      <DeviceCard
+        name="58105716 App (iPhone/iPad)"
+        daysLeft={25}
+        active={true}
+      />
 
       {showModal && <AddDeviceModal onClose={() => setShowModal(false)} />}
     </div>

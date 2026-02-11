@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 export default function TopUp() {
-  const navigate = useNavigate();
   const [selected, setSelected] = useState(100);
 
   const amounts = [100, 200, 300, 400, 500, 700, 800, 900, 1000];
@@ -12,9 +10,7 @@ export default function TopUp() {
       {/* Верхняя панель */}
       <div className="topBar">
 
-        <div className="miniBalance">
-          Баланс <b>84 ₽</b>
-        </div>
+        
       </div>
 
       {/* Заголовок */}
