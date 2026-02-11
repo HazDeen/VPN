@@ -1,0 +1,329 @@
+body {
+  margin: 0;
+  background: #0e0f12;
+  font-family: Arial, sans-serif;
+  color: white;
+}
+
+.container {
+  max-width: 420px;
+  margin: auto;
+  padding: 20px;
+}
+
+.card {
+  background: #1a1c22;
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 18px;
+}
+
+.center {
+  text-align: center;
+}
+
+.title {
+  opacity: 0.7;
+  font-size: 16px;
+}
+
+.balance {
+  font-size: 64px;
+  margin: 10px 0;
+}
+
+.balance span {
+  font-size: 32px;
+  opacity: 0.6;
+}
+
+.subtitle {
+  opacity: 0.6;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  flex: 1;
+  background: #22252d;
+  border: none;
+  padding: 16px;
+  border-radius: 16px;
+  color: #4da3ff;
+  font-size: 16px;
+}
+
+.devicesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.addBtn {
+  background: transparent;
+  border: none;
+  color: #4da3ff;
+  font-size: 16px;
+}
+
+.deviceItem {
+  display: flex;
+  gap: 12px;
+  margin-top: 15px;
+  align-items: center;
+}
+
+.icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #2a2e38;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.deviceName {
+  font-size: 15px;
+}
+
+.deviceDate {
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+.topupGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.topupBtn {
+  padding: 18px;
+  border-radius: 16px;
+  border: none;
+  background: #22252d;
+  color: white;
+  font-size: 18px;
+}
+
+.backBtn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  border: none;
+  background: #2a2e38;
+  color: white;
+}
+
+.txItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #2a2e38;
+}
+
+.txType {
+  font-size: 15px;
+}
+
+.txDate {
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+.txAmount {
+  font-size: 16px;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modalCard {
+  background: #1a1c22;
+  padding: 20px;
+  border-radius: 18px;
+  width: 320px;
+}
+
+.input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+  background: #22252d;
+  color: white;
+}
+
+.modalBtn {
+  margin-top: 15px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: none;
+  background: #4da3ff;
+  color: black;
+  font-size: 16px;
+}
+
+.modalClose {
+  margin-top: 10px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: none;
+  background: #2a2e38;
+  color: white;
+}
+
+/* Верхняя панель */
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.backLink {
+  background: none;
+  border: none;
+  color: #4da3ff;
+  font-size: 18px;
+}
+
+.miniBalance {
+  opacity: 0.8;
+  font-size: 15px;
+}
+
+/* Заголовки */
+.pageTitle {
+  font-size: 32px;
+  margin: 10px 0;
+}
+
+.pageSubtitle {
+  opacity: 0.6;
+  margin-bottom: 20px;
+}
+
+/* Пополнение */
+.payCard {
+  padding: 25px;
+}
+
+.bigAmount {
+  font-size: 64px;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.amountGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.amountBtn {
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid #2a2e38;
+  background: transparent;
+  color: white;
+  font-size: 18px;
+}
+
+.amountBtn.active {
+  background: #22252d;
+  border: 1px solid #4da3ff;
+  color: #4da3ff;
+}
+
+/* Текст подсказки */
+.hintText {
+  margin-top: 20px;
+  font-size: 13px;
+  opacity: 0.4;
+  text-align: center;
+}
+
+/* Кнопка оплаты */
+.payBtn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 18px;
+  border-radius: 16px;
+  border: none;
+  font-size: 18px;
+  font-weight: bold;
+  background: #3390ff;
+  color: white;
+}
+
+/* История */
+.historyList {
+  margin-top: 25px;
+}
+
+.historyDate {
+  opacity: 0.5;
+  margin: 18px 0 8px;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  background: #1a1c22;
+  padding: 15px;
+  border-radius: 16px;
+}
+
+.historyIcon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #22252d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.historyInfo {
+  flex: 1;
+  margin-left: 14px;
+}
+
+.historyTitle {
+  font-size: 16px;
+}
+
+.historyTime {
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+.historyAmount {
+  font-size: 18px;
+  font-weight: bold;
+  color: #2ecc71;
+}
