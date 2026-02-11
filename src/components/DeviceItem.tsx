@@ -1,3 +1,5 @@
+import { Smartphone } from "lucide-react";
+
 type Props = {
   name: string;
   date: string;
@@ -5,10 +7,12 @@ type Props = {
 
 export default function DeviceItem({ name, date }: Props) {
   return (
-    <div className="deviceItem">
-      <div className="icon"></div>
+    <div className="deviceRow">
+      <div className="deviceIcon">
+        <Smartphone size={20} />
+      </div>
 
-      <div className="info">
+      <div className="deviceText">
         <p className="deviceName">{name}</p>
         <p className="deviceDate">{date}</p>
       </div>

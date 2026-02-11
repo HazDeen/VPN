@@ -1,23 +1,27 @@
+import { motion } from "framer-motion";
+import Button from "../ui/Button";
+
 type Props = {
   onClose: () => void;
 };
 
 export default function AddDeviceModal({ onClose }: Props) {
   return (
-    <div className="modalOverlay">
-      <div className="modalCard">
-        <h3>Добавить устройство</h3>
+    <div className="sheetOverlay" onClick={onClose}>
+      <motion.div
+        className="sheet"
+        onClick={(e) => e.stopPropagation()}
+        initial={{ y: 400 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.25 }}
+      >
+        <h3 className="sheetTitle">Добавить устройство</h3>
 
-        <input
-          className="input"
-          placeholder="Название устройства (например iPhone)"
-        />
+        <input className="sheetInput" placeholder="Например: iPhone 15" />
 
-        <button className="modalBtn">Добавить</button>
-        <button className="modalClose" onClick={onClose}>
-          Отмена
-        </button>
-      </div>
+        <Button variant="primary">Добавить</Button>
+        <Button onClick={onClose}>Отмена</Button>
+      </motion.div>
     </div>
   );
 }

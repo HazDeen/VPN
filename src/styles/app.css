@@ -327,3 +327,189 @@ body {
   font-weight: bold;
   color: #2ecc71;
 }
+
+/* UI SYSTEM */
+.uiCard {
+  background: #1a1c22;
+  border-radius: 22px;
+  padding: 22px;
+  margin-bottom: 18px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.uiBtn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 18px;
+  border: none;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.uiBtn.secondary {
+  background: #22252d;
+  color: white;
+}
+
+.uiBtn.primary {
+  background: #3390ff;
+  color: white;
+  font-weight: bold;
+}
+
+/* Bottom Sheet */
+.sheetOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 420px;
+  background: #14161b;
+  border-radius: 22px 22px 0 0;
+  padding: 25px;
+}
+
+.sheetTitle {
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+.sheetInput {
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  border: none;
+  outline: none;
+  background: #1f222b;
+  color: white;
+  margin-bottom: 15px;
+}
+
+/* Devices */
+.deviceRow {
+  display: flex;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.deviceIcon {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  background: #22252d;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.deviceText {
+  margin-left: 14px;
+}
+
+.deviceName {
+  font-size: 15px;
+}
+
+.deviceDate {
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+
+/* APP SHELL */
+.appShell {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  padding-top: 90px;
+  padding-bottom: 90px;
+}
+
+/* HEADER */
+.header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  max-width: 420px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(14, 15, 18, 0.95);
+  backdrop-filter: blur(12px);
+
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  z-index: 100;
+}
+
+.headerTitle {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.headerBalance {
+  opacity: 0.8;
+  font-size: 15px;
+}
+
+.headerMenu {
+  background: none;
+  border: none;
+  color: white;
+}
+
+/* TABBAR */
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  max-width: 420px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: rgba(20, 22, 27, 0.95);
+  backdrop-filter: blur(12px);
+
+  display: flex;
+  justify-content: space-around;
+  padding: 14px 0;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+
+  z-index: 100;
+}
+
+.tabItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+
+  font-size: 12px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.tabItem.active {
+  color: #3390ff;
+}

@@ -38,9 +38,6 @@ export default function History() {
     <div className="container">
       {/* Верх */}
       <div className="topBar">
-        <button className="backLink" onClick={() => navigate("/")}>
-          ← Назад
-        </button>
 
         <div className="miniBalance">
           Баланс <b>84 ₽</b>

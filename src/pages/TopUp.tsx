@@ -11,9 +11,6 @@ export default function TopUp() {
     <div className="container">
       {/* Верхняя панель */}
       <div className="topBar">
-        <button className="backLink" onClick={() => navigate("/")}>
-          ← Назад
-        </button>
 
         <div className="miniBalance">
           Баланс <b>84 ₽</b>
