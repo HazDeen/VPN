@@ -1,16 +1,18 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
+import { PlusCircle, Clock } from 'lucide-react';
 
 export default function ActionButtons() {
   const navigate = useNavigate();
 
   return (
-    <div className="actions">
-      <button className="btn" onClick={() => navigate("/topup")}>
-        ➕ Пополнить
+    <div className="actionsRow">
+      <button className="actionBtnSmall" onClick={() => navigate('/topup')}>
+        <PlusCircle size={20} />
+        Пополнить
       </button>
-
-      <button className="btn" onClick={() => navigate("/history")}>
-        🕒 История
+      <button className="actionBtnSmall" onClick={() => navigate('/history')}>
+        <Clock size={20} />
+        История
       </button>
     </div>
   );

@@ -1,37 +1,46 @@
+// pages/Home.tsx
+import { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import { Moon, Sun } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 import BalanceCard from "../components/BalanceCard";
-import DevicesList from "../components/DevicesList";
-import { useNavigate } from "react-router-dom";
-import { CreditCard, Clock } from "lucide-react";
+import DevicesCard from "../components/DevicesCard";
+import ActionButtons from "../components/ActionButtons";
+import AddDeviceModal from "../components/AddDeviceModal";
 
 export default function Home() {
-  const navigate = useNavigate();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+
+  const handleAddDevice = (name: string, type: string, customName: string) => {
+    console.log('Добавляем устройство:', { name, type, customName });
+    setShowAddModal(false);
+  };
 
   return (
     <div className="container">
-      {/* Баланс */}
-      <BalanceCard balance={84} days={25} />
-
-      {/* Кнопки (новый стиль) */}
-      <div className="actionsRow">
-        <button
-          className="actionBtnSmall"
-          onClick={() => navigate("/topup")}
-        >
-          <CreditCard size={18} />
-          Пополнить
-        </button>
-
-        <button
-          className="actionBtnSmall"
-          onClick={() => navigate("/history")}
-        >
-          <Clock size={18} />
-          История
+      {/* Хедер с кнопкой темы */}
+      <div className="homeHeader">
+        <h1 className="screenTitle">VPN</h1>
+        <button className="themeButton" onClick={toggleTheme}>
+          {theme === 'dark' ? <Sun size={22} /> : <Moon size={22} />}
         </button>
       </div>
-
-      {/* Устройства */}
-      <DevicesList />
+      
+      <BalanceCard balance={84} days={25} />
+      
+      <ActionButtons />
+      
+      <DevicesCard onAddClick={() => setShowAddModal(true)} />
+      
+      <AnimatePresence mode="wait">
+        {showAddModal && (
+          <AddDeviceModal 
+            onClose={() => setShowAddModal(false)}
+            onAdd={handleAddDevice}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

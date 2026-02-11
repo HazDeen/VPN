@@ -1,49 +1,90 @@
-import { useState } from "react";
+// pages/TopUp.tsx
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, CreditCard } from 'lucide-react';
+
+const PRESET_AMOUNTS = [100, 300, 500];
 
 export default function TopUp() {
-  const [selected, setSelected] = useState(100);
+  const navigate = useNavigate();
+  const [selected, setSelected] = useState<number | 'custom'>(100);
+  const [customAmount, setCustomAmount] = useState('');
 
-  const amounts = [100, 200, 300, 400, 500, 700, 800, 900, 1000];
+  const handlePay = () => {
+    const amount = selected === 'custom' ? Number(customAmount) : selected;
+    console.log('Оплата:', amount);
+  };
+
+  const currentBalance = 84;
+  const newBalance = currentBalance + (selected === 'custom' ? Number(customAmount) || 0 : selected);
 
   return (
-    <div className="container">
-      {/* Верхняя панель */}
-      <div className="topBar">
-
-        
+    <div className="topupPage">
+      <div className="topupHeader">
+        <button className="backButton" onClick={() => navigate(-1)}>
+          <ArrowLeft size={24} />
+        </button>
+        <h1>Пополнение баланса</h1>
       </div>
 
-      {/* Заголовок */}
-      <h1 className="pageTitle">Пополнение баланса</h1>
-      <p className="pageSubtitle">
-        Зачисление средств может занять до 15 минут!
-      </p>
-
-      {/* Карточка */}
-      <div className="card payCard">
-        <h2 className="bigAmount">{selected} ₽</h2>
-        <p className="subtitle">Выберите сумму</p>
-
-        {/* Сетка */}
-        <div className="amountGrid">
-          {amounts.map((a) => (
-            <button
-              key={a}
-              className={`amountBtn ${selected === a ? "active" : ""}`}
-              onClick={() => setSelected(a)}
-            >
-              {a} ₽
-            </button>
-          ))}
+      <div className="topupContent">
+        {/* Блок с балансом */}
+        <div className="balancePreview">
+          <span className="previewLabel">Баланс после пополнения</span>
+          <span className="previewAmount">{newBalance} ₽</span>
         </div>
 
-        <p className="hintText">
-          Пополнение баланса является разовой операцией (не подписка). Мы не
-          имеем доступа к вашим платежным данным.
-        </p>
+        {/* Выбор суммы */}
+        <div className="amountSelector">
+          <p className="selectorTitle">Выберите сумму</p>
+          
+          <div className="amountGrid">
+            {PRESET_AMOUNTS.map((amount) => (
+              <button
+                key={amount}
+                className={`amountChip ${selected === amount ? 'active' : ''}`}
+                onClick={() => setSelected(amount)}
+              >
+                {amount} ₽
+              </button>
+            ))}
+          </div>
+
+          <button
+            className={`customChip ${selected === 'custom' ? 'active' : ''}`}
+            onClick={() => setSelected('custom')}
+          >
+            Другое
+          </button>
+
+          {selected === 'custom' && (
+            <input
+              type="number"
+              className="customAmountInput"
+              placeholder="Введите сумму"
+              value={customAmount}
+              onChange={(e) => setCustomAmount(e.target.value)}
+              autoFocus
+            />
+          )}
+        </div>
+
+        {/* КРАСИВЫЙ БЛОК С КОММЕНТАРИЕМ */}
+        <div className="infoCard">
+          <div className="infoIcon">ℹ️</div>
+          <div className="infoText">
+            <p className="infoMain">Пополнение баланса является разовой операцией (не подписка).</p>
+            <p className="infoSecondary">Мы не имеем доступа к вашим платежным данным.</p>
+          </div>
+        </div>
 
         {/* Кнопка оплаты */}
-        <button className="payBtn">
+        <button 
+          className="payButton"
+          onClick={handlePay}
+          disabled={selected === 'custom' && !customAmount}
+        >
+          <CreditCard size={20} />
           Выбрать способ оплаты
         </button>
       </div>
