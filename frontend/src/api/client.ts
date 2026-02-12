@@ -1,6 +1,6 @@
 import type { DeviceType } from '../types/device';  // 👈 import type!
 
-const API_URL = 'http://localhost:3001';
+const API_URL = 'https://vpnvpn-backend.onrender.com';
 
 // Получаем initData из Telegram
 const getInitData = (): string => {
