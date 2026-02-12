@@ -1,64 +1,32 @@
-// pages/History.tsx
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowDownCircle, RefreshCw, PlusCircle } from 'lucide-react';
-
-const MOCK_TRANSACTIONS = [
-  {
-    date: '7 ФЕВРАЛЯ',
-    items: [
-      { 
-        time: '09:45', 
-        description: 'Заменено устройство', 
-        amount: null, 
-        type: 'replace',
-        icon: RefreshCw,
-        iconColor: '#FF9F0A'
-      }
-    ]
-  },
-  {
-    date: '6 ФЕВРАЛЯ',
-    items: [
-      { 
-        time: '09:00', 
-        description: 'Пополнение счёта', 
-        amount: 100, 
-        type: 'topup',
-        icon: ArrowDownCircle,
-        iconColor: '#34C759'
-      }
-    ]
-  },
-  {
-    date: '10 ЯНВАРЯ',
-    items: [
-      { 
-        time: '10:45', 
-        description: 'Заменено устройство', 
-        amount: null, 
-        type: 'replace',
-        icon: RefreshCw,
-        iconColor: '#FF9F0A'
-      }
-    ]
-  },
-  {
-    date: '5 ЯНВАРЯ',
-    items: [
-      { 
-        time: '04:10', 
-        description: 'Пополнение счёта', 
-        amount: 100, 
-        type: 'topup',
-        icon: ArrowDownCircle,
-        iconColor: '#34C759'
-      }
-    ]
-  }
-];
+import { ArrowLeft, PlusCircle, RefreshCw, ArrowDownCircle } from 'lucide-react';
+import { useTransactions } from '../hooks/useTransactions';
+import { useBalance } from '../hooks/useBalance';
 
 export default function History() {
   const navigate = useNavigate();
+  const { transactions, loading: transactionsLoading } = useTransactions();
+  const { balance, loading: balanceLoading } = useBalance();
+
+  if (transactionsLoading || balanceLoading) {
+    return (
+      <div className="historyPage">
+        <div className="historyHeader">
+          <button className="backButton" onClick={() => navigate(-1)}>
+            <ArrowLeft size={24} />
+          </button>
+          <h1>История платежей</h1>
+          <button className="topupSmallButton" onClick={() => navigate('/topup')}>
+            <PlusCircle size={20} />
+            <span>{balance} ₽</span>
+          </button>
+        </div>
+        <div style={{ textAlign: 'center', marginTop: '40px', color: 'rgba(255,255,255,0.5)' }}>
+          Загрузка...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="historyPage">
@@ -69,28 +37,38 @@ export default function History() {
         <h1>История платежей</h1>
         <button className="topupSmallButton" onClick={() => navigate('/topup')}>
           <PlusCircle size={20} />
-          <span>84 ₽</span>
+          <span>{balance} ₽</span>
         </button>
       </div>
 
       <div className="transactionsList">
-        {MOCK_TRANSACTIONS.map((group, idx) => (
-          <div key={idx} className="transactionGroup">
-            <div className="transactionDate">{group.date}</div>
-            {group.items.map((item, itemIdx) => {
-              const Icon = item.icon;
+        {Object.entries(transactions).map(([date, items]: [string, any[]]) => (
+          <div key={date} className="transactionGroup">
+            <div className="transactionDate">{date}</div>
+            {items.map((item, itemIdx) => {
+              // Определяем иконку в зависимости от типа операции
+              const isTopup = item.description.includes('Пополнение');
+              
+              let Icon = RefreshCw;
+              let iconColor = '#FF9F0A';
+              
+              if (isTopup) {
+                Icon = ArrowDownCircle;
+                iconColor = '#34C759';
+              }
+              
               return (
                 <div key={itemIdx} className="transactionRow">
-                  <div className="transactionIcon" style={{ background: `${item.iconColor}10` }}>
-                    <Icon size={20} color={item.iconColor} />
+                  <div className="transactionIcon" style={{ background: `${iconColor}10` }}>
+                    <Icon size={20} color={iconColor} />
                   </div>
                   <div className="transactionInfo">
                     <span className="transactionDesc">{item.description}</span>
                     <span className="transactionTime">{item.time}</span>
                   </div>
-                  {item.amount && (
-                    <span className="transactionAmount positive">
-                      +{item.amount} ₽
+                  {item.amount !== 0 && (
+                    <span className={`transactionAmount ${item.amount > 0 ? 'positive' : 'negative'}`}>
+                      {item.amount > 0 ? '+' : ''}{item.amount} ₽
                     </span>
                   )}
                 </div>
@@ -98,6 +76,12 @@ export default function History() {
             })}
           </div>
         ))}
+        
+        {Object.keys(transactions).length === 0 && (
+          <div style={{ textAlign: 'center', marginTop: '40px', color: 'rgba(255,255,255,0.5)' }}>
+            Нет операций
+          </div>
+        )}
       </div>
     </div>
   );

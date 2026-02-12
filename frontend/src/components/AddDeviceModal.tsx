@@ -1,14 +1,14 @@
-// components/AddDeviceModal.tsx
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Smartphone, Laptop, Monitor, Cpu, Plus, X } from "lucide-react";
+import { Smartphone, Laptop, Monitor, Cpu } from "lucide-react";
+import type { DeviceType } from '../types/device';
 
 type Props = {
   onClose: () => void;
-  onAdd?: (deviceName: string, deviceType: string, customName: string) => void;
+  onAdd: (name: string, type: DeviceType, customName: string) => void;
 };
 
-const DEVICE_TYPES = [
+const DEVICE_TYPES: { id: DeviceType; label: string; icon: any }[] = [
   { id: "iPhone", label: "iPhone", icon: Smartphone },
   { id: "Android", label: "Android", icon: Smartphone },
   { id: "Mac", label: "Mac", icon: Laptop },
@@ -19,22 +19,18 @@ const DEVICE_TYPES = [
 export default function AddDeviceModal({ onClose, onAdd }: Props) {
   const [name, setName] = useState("");
   const [customName, setCustomName] = useState("");
-  const [selectedType, setSelectedType] = useState("iPhone");
+  const [selectedType, setSelectedType] = useState<DeviceType>("iPhone");
   const [isClosing, setIsClosing] = useState(false);
 
   const handleClose = () => {
     if (isClosing) return;
     setIsClosing(true);
-    setTimeout(() => {
-      onClose();
-    }, 200);
+    setTimeout(() => onClose(), 200);
   };
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-    if (onAdd) {
-      onAdd(name, selectedType, customName);
-    }
+    onAdd(name, selectedType, customName || name);
     handleClose();
   };
 
@@ -44,7 +40,6 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
       onClick={handleClose}
     >
       <div className="modalBackdrop" />
@@ -54,12 +49,7 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
         onClick={(e) => e.stopPropagation()}
         initial={{ y: "100%" }}
         animate={{ y: isClosing ? "100%" : 0 }}
-        transition={{ 
-          type: "spring", 
-          damping: 30, 
-          stiffness: 300,
-          mass: 1
-        }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
       >
         <motion.div 
           className="modalHandle" 
@@ -81,7 +71,7 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
 
         <div className="modalField">
           <label className="modalLabel">
-            Название устройства <span className="modalLabelHint">(как оно будет отображаться)</span>
+            Название устройства <span style={{ fontSize: '12px', opacity: 0.5 }}>(как оно будет отображаться)</span>
           </label>
           <input
             className="modalInput"
@@ -96,7 +86,7 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
           <label className="modalLabel">Модель устройства</label>
           <input
             className="modalInput"
-            placeholder="Например: iPhone 13"
+            placeholder="Например: iPhone 15"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -114,7 +104,6 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
                   onClick={() => setSelectedType(type.id)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
                 >
                   <Icon size={24} />
                   <span>{type.label}</span>
@@ -124,17 +113,14 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
           </div>
         </div>
 
-        {/* КНОПКИ В ОДНУ ЛИНИЮ */}
         <div className="modalActionsRow">
           <motion.button
             className="modalSubmitBtn"
             onClick={handleSubmit}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.2 }}
           >
-            <Plus size={18} />
-            Добавить за 300 ₽
+            + Добавить за 300 ₽
           </motion.button>
           
           <motion.button
@@ -142,10 +128,8 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
             onClick={handleClose}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.2 }}
           >
-            <X size={18} />
-            Отмена
+            × Отмена
           </motion.button>
         </div>
       </motion.div>

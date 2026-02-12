@@ -16,15 +16,16 @@ export class TransactionService {
         take: 50,
       });
 
-      // Группируем по датам
+      // Группируем по датам для фронта
       const grouped = {};
       
       transactions.forEach((tx) => {
+        // 👇 ИСПРАВЛЕННЫЙ ФОРМАТ: "7 ФЕВРАЛЯ", "6 ФЕВРАЛЯ"
         const date = tx.createdAt.toLocaleDateString('ru-RU', {
           day: 'numeric',
           month: 'long',
-          year: 'numeric',
         }).toUpperCase();
+        // Убираем "2026 Г." и "12 ФЕВРАЛЯ" → "12 ФЕВРАЛЯ"
 
         if (!grouped[date]) {
           grouped[date] = [];

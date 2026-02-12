@@ -1,17 +1,19 @@
-// components/DeviceCard.tsx
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, Laptop, Monitor, Cpu, ChevronRight } from 'lucide-react';
+import type { DeviceType } from '../types/device';
 
 type Props = {
   id: number;
   name: string;
-  customName?: string;
-  type: 'iPhone' | 'Android' | 'Mac' | 'PC' | 'Other';
+  model: string;
+  type: DeviceType;
   date: string;
   isActive: boolean;
+  configLink: string;
+  daysLeft: number;
 };
 
-const getDeviceIcon = (type: Props['type']) => {
+const getDeviceIcon = (type: DeviceType) => {
   switch (type) {
     case 'iPhone':
     case 'Android':
@@ -20,12 +22,14 @@ const getDeviceIcon = (type: Props['type']) => {
       return Laptop;
     case 'PC':
       return Monitor;
-    default:
+    case 'Other':
       return Cpu;
+    default:
+      return Smartphone;
   }
 };
 
-export default function DeviceCard({ id, name, customName, type, date, isActive }: Props) {
+export default function DeviceCard({ id, name, model, type, date, isActive }: Props) {
   const navigate = useNavigate();
   const Icon = getDeviceIcon(type);
 
@@ -41,15 +45,14 @@ export default function DeviceCard({ id, name, customName, type, date, isActive 
       <div className="deviceInfo">
         <div className="deviceNameRow">
           <div className="deviceNameWrapper">
-            <span className="deviceName">{customName || name}</span>
-            {/* ТОЧКА ТУТ — СРАЗУ ПОСЛЕ НАЗВАНИЯ */}
-            {isActive ? (
-              <span className="activeDot" />
-            ) : (
-              <span className="inactiveDot" />
-            )}
+            <span className="deviceName">{name}</span>
+            <span className="deviceOriginalName">{model}</span>
           </div>
-          <span className="deviceOriginalName">{name}</span>
+          {isActive ? (
+            <span className="activeDot" />
+          ) : (
+            <span className="inactiveDot" />
+          )}
         </div>
         <span className="deviceDate">{date}</span>
       </div>

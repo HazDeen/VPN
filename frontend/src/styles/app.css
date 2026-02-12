@@ -944,10 +944,18 @@ body {
   color: var(--text-secondary);
 }
 
-.transactionAmount {
+.transactionAmount.positive {
   font-size: 17px;
   font-weight: 600;
-  color: var(--success);
+  color: #34c759;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.transactionAmount.negative {
+  font-size: 17px;
+  font-weight: 600;
+  color: #ff4d4d;
   margin-left: 8px;
   flex-shrink: 0;
 }
@@ -971,6 +979,7 @@ body {
   background: rgba(255, 255, 255, 0.1);
   transform: scale(0.95);
 }
+
 
 /* -------------------------------------------- */
 /* 8. СТРАНИЦА ДЕТАЛЕЙ УСТРОЙСТВА */
@@ -1165,6 +1174,120 @@ body {
 .deleteButton:active {
   transform: scale(0.98);
   background: rgba(255, 77, 77, 0.15);
+}
+
+/* ====== СТИЛИ ДЛЯ ТЕМНЫХ УВЕДОМЛЕНИЙ ====== */
+.sonner-toast {
+  background: #1a1c22 !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* Адаптация для светлой темы */
+[data-theme="light"] .sonner-toast {
+  background: #ffffff !important;
+  color: #1c1c1e !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+.deleteConfirmToast {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: #1a1c22;
+  border: 1px solid rgba(255, 77, 77, 0.3);
+  border-radius: 20px;
+  width: 360px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+.deleteConfirmCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: #1a1c22;
+  border: 2px solid rgba(255, 77, 77, 0.5); /* 👈 КРАСНАЯ ОБВОДКА */
+  border-radius: 20px;
+  padding: 20px;
+  width: 360px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+.deleteConfirmIcon {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 77, 77, 0.1);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.deleteConfirmContent {
+  flex: 1;
+}
+
+.deleteConfirmTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.deleteConfirmDescription {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 16px;
+}
+
+.deleteConfirmActions {
+  display: flex;
+  gap: 12px;
+}
+
+.deleteConfirmCancel {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deleteConfirmCancel:active {
+  background: rgba(255, 255, 255, 0.05);
+  transform: scale(0.97);
+}
+
+.deleteConfirmConfirm {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  border: none;
+  background: #ff4d4d;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deleteConfirmConfirm:active {
+  transform: scale(0.97);
+  opacity: 0.9;
 }
 
 /* -------------------------------------------- */

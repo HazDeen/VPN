@@ -2,11 +2,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard } from 'lucide-react';
+import { useBalance } from '../hooks/useBalance';
 
 const PRESET_AMOUNTS = [100, 300, 500];
 
 export default function TopUp() {
   const navigate = useNavigate();
+  const { balance } = useBalance();
   const [selected, setSelected] = useState<number | 'custom'>(100);
   const [customAmount, setCustomAmount] = useState('');
 
@@ -15,7 +17,7 @@ export default function TopUp() {
     console.log('Оплата:', amount);
   };
 
-  const currentBalance = 84;
+  const currentBalance = typeof balance === 'number' ? balance : 0;
   const newBalance = currentBalance + (selected === 'custom' ? Number(customAmount) || 0 : selected);
 
   return (
