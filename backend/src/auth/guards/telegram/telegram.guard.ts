@@ -28,20 +28,16 @@ export class TelegramGuard implements CanActivate {
       const hash = params.get('hash');
       params.delete('hash');
 
-      // Сортируем параметры
       const items = Array.from(params.entries());
       items.sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
 
-      // Создаем строку для проверки
       const dataCheckString = items.map(([key, value]) => `${key}=${value}`).join('\n');
 
-      // Создаем секретный ключ
       const secretKey = crypto
         .createHmac('sha256', 'WebAppData')
         .update(botToken)
         .digest();
 
-      // Вычисляем хеш
       const calculatedHash = crypto
         .createHmac('sha256', secretKey)
         .update(dataCheckString)
@@ -51,7 +47,6 @@ export class TelegramGuard implements CanActivate {
         throw new UnauthorizedException('Invalid hash');
       }
 
-      // Проверяем время (не старше 1 часа)
       const authDate = parseInt(params.get('auth_date') || '0');
       const currentTime = Math.floor(Date.now() / 1000);
       
@@ -59,7 +54,6 @@ export class TelegramGuard implements CanActivate {
         throw new UnauthorizedException('Auth data expired');
       }
 
-      // Парсим данные пользователя
       const userStr = params.get('user');
       if (!userStr) {
         throw new UnauthorizedException('User data not found');

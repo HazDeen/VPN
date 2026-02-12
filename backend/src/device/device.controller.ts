@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, Param, Delete, Put, Req, UseGuards } from '@nestjs/common';
 import { DeviceService } from './device.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
-// import { TelegramGuard } from '../auth/guards/telegram/telegram.guard'; // 👈 ЗАКОММЕНТИРУЙ
+import { TelegramGuard } from '../auth/guards/telegram/telegram.guard'; // 👈 ЗАКОММЕНТИРУЙ
 
 @Controller('devices')
-// @UseGuards(TelegramGuard) // 👈 ЗАКОММЕНТИРУЙ
+@UseGuards(TelegramGuard) // 👈 ЗАКОММЕНТИРУЙ
 export class DeviceController {
   constructor(private readonly deviceService: DeviceService) {}
 

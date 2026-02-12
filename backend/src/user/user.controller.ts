@@ -1,9 +1,9 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
-// import { TelegramGuard } from '../auth/guards/telegram/telegram.guard'; // 👈 ЗАКОММЕНТИРУЙ
+import { TelegramGuard } from '../auth/guards/telegram/telegram.guard'; // 👈 ЗАКОММЕНТИРУЙ
 
 @Controller('user')
-// @UseGuards(TelegramGuard) // 👈 ЗАКОММЕНТИРУЙ
+@UseGuards(TelegramGuard) // 👈 ЗАКОММЕНТИРУЙ
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

@@ -6,10 +6,13 @@ import History from "./pages/History";
 import DeviceDetail from "./pages/DeviceDetail";
 import "./styles/app.css";
 import { Toaster } from 'sonner';
+import { ThemeProvider } from "./context/ThemeContext";
 
 function App() {
   return (
+    
     <AuthProvider>
+      <ThemeProvider> 
       <BrowserRouter>
       <Toaster 
       position="bottom-center"
@@ -33,6 +36,7 @@ function App() {
           <Route path="/device/:id" element={<DeviceDetail />} />
         </Routes>
       </BrowserRouter>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

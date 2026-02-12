@@ -1,13 +1,13 @@
 import { Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-// import { TelegramGuard } from './guards/telegram/telegram.guard'; // 👈 ЗАКОММЕНТИРУЙ
+import { TelegramGuard } from './guards/telegram/telegram.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('telegram')
-  // @UseGuards(TelegramGuard) // 👈 ЗАКОММЕНТИРУЙ
+  @UseGuards(TelegramGuard) // 👈 ЗАКОММЕНТИРУЙ
   async telegramAuth(@Req() req) {
     // 👇 ИСПОЛЬЗУЕМ ТЕСТОВОГО ПОЛЬЗОВАТЕЛЯ
     const testUser = {

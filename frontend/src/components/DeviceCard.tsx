@@ -45,14 +45,10 @@ export default function DeviceCard({ id, name, model, type, date, isActive }: Pr
       <div className="deviceInfo">
         <div className="deviceNameRow">
           <div className="deviceNameWrapper">
+            {isActive ? (<span className="activeDot" />) : (<span className="inactiveDot" />)}
             <span className="deviceName">{name}</span>
             <span className="deviceOriginalName">{model}</span>
           </div>
-          {isActive ? (
-            <span className="activeDot" />
-          ) : (
-            <span className="inactiveDot" />
-          )}
         </div>
         <span className="deviceDate">{date}</span>
       </div>

@@ -7,11 +7,14 @@ import DevicesCard from "../components/DevicesCard";
 import ActionButtons from "../components/ActionButtons";
 import AddDeviceModal from "../components/AddDeviceModal";
 import type { DeviceType } from '../types/device';
+import { Moon, Sun } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Home() {
   const [showAddModal, setShowAddModal] = useState(false);
   const { addDevice } = useDevices();
   const { refetch: refetchBalance } = useBalance();
+  const { theme, toggleTheme } = useTheme();
 
   const handleAddDevice = async (name: string, type: DeviceType, customName: string) => {
     try {
@@ -25,7 +28,12 @@ export default function Home() {
 
   return (
     <div className="container">
-      <h1 className="screenTitle">VPN</h1>
+      <div className="homeHeader">
+        <h1 className="screenTitle">VPN</h1>
+        <button className="themeButton" onClick={toggleTheme}>
+          {theme === 'dark' ? <Sun size={22} /> : <Moon size={22} />}
+        </button>
+      </div>
       
       <BalanceCard />
       
