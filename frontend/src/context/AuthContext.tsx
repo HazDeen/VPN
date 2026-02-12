@@ -27,11 +27,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = async () => {
     try {
       setLoading(true);
-      // ✅ РЕАЛЬНАЯ АВТОРИЗАЦИЯ!
+      console.log('🔐 Attempting to login...');
+      
+      // Проверяем initData
+      // @ts-ignore
+      console.log('initData exists:', !!window.Telegram?.WebApp?.initData);
+      
       const data = await api.auth.telegram();
+      console.log('✅ Login success:', data);
+      
       setUser(data.user);
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('❌ Login failed:', error);
+      
+      // Для теста - показываем хоть что-то
+      // @ts-ignore
+      if (!window.Telegram?.WebApp?.initData) {
+        console.log('⚠️ Not in Telegram, using test user');
+        setUser({
+          id: 1,
+          telegramId: '123456789',
+          firstName: 'Test',
+          lastName: '',
+          username: 'test',
+          balance: 1000
+        });
+      }
     } finally {
       setLoading(false);
     }
