@@ -11,8 +11,10 @@ const getInitData = (): string => {
     console.warn('Not in Telegram environment');
   }
   
-  // Для теста вне Telegram
-  return "query_id=AAHd3N4zAAAAAN03jvTvzSnT&user=%7B%22id%22%3A123456789%2C%22first_name%22%3A%22Test%22%7D&auth_date=1739347200&hash=89d6079ad7faf5d3f80f7f1b4e3f8d2b1e7c5a9b4d6f8e2a4c6b8d0a2c4e6f8";
+  // Для теста вне Telegram (раскомментируй если нужно)
+  // return "query_id=AAHd3N4zAAAAAN03jvTvzSnT&user=%7B%22id%22%3A123456789%2C%22first_name%22%3A%22Test%22%7D&auth_date=1739347200&hash=89d6079ad7faf5d3f80f7f1b4e3f8d2b1e7c5a9b4d6f8e2a4c6b8d0a2c4e6f8";
+  
+  return ''; // 👈 ВСЕГДА ВОЗВРАЩАЙ ЧТО-ТО!
 };
 
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
@@ -47,6 +49,7 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   }
 }
 
+// ✅ ЭКСПОРТИРУЕМ api!
 export const api = {
   auth: {
     telegram: () => apiFetch('/auth/telegram', { method: 'POST' }),
@@ -72,15 +75,15 @@ export const api = {
     getAll: () => apiFetch('/transactions'),
   },
   payments: {
-  testPayment: (amount: number) => 
-    apiFetch('/payments/test-payment', { 
-      method: 'POST', 
-      body: JSON.stringify({ amount }) 
-    }),
-  createInvoice: (amount: number) => 
-    apiFetch('/payments/create-invoice', { 
-      method: 'POST', 
-      body: JSON.stringify({ amount }) 
-    }),
-},
+    testPayment: (amount: number) => 
+      apiFetch('/payments/test-payment', { 
+        method: 'POST', 
+        body: JSON.stringify({ amount }) 
+      }),
+    createInvoice: (amount: number) => 
+      apiFetch('/payments/create-invoice', { 
+        method: 'POST', 
+        body: JSON.stringify({ amount }) 
+      }),
+  },
 };

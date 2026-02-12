@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = async () => {
     try {
       setLoading(true);
+      // ✅ РЕАЛЬНАЯ АВТОРИЗАЦИЯ!
       const data = await api.auth.telegram();
       setUser(data.user);
     } catch (error) {
@@ -65,4 +66,4 @@ export const useAuth = () => {
   return context;
 };
 
-export default AuthProvider; // 👈 ДОБАВЛЯЕМ ЭКСПОРТ ПО УМОЛЧАНИЮ
+export default AuthProvider;

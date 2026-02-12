@@ -4,7 +4,12 @@ export default function BalanceCard() {
   const { balance, daysLeft, loading } = useBalance();
 
   if (loading) {
-    return <div className="balanceContainer">Загрузка...</div>;
+    return (
+      <div className="balanceContainer">
+        <div className="balanceAmount">...</div>
+        <div className="balanceHint">Загрузка...</div>
+      </div>
+    );
   }
 
   return (

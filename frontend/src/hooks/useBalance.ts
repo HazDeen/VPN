@@ -6,12 +6,12 @@ export const useBalance = () => {
   const [balance, setBalance] = useState(0);
   const [daysLeft, setDaysLeft] = useState(0);
   const [loading, setLoading] = useState(true);
-  const auth = useAuth(); // 👈 ТЕПЕРЬ AuthProvider ЕСТЬ!
-  const { updateBalance } = auth;
+  const { updateBalance } = useAuth();
 
   const fetchBalance = async () => {
     try {
       setLoading(true);
+      // ✅ РЕАЛЬНЫЙ ЗАПРОС К БЭКЕНДУ!
       const data = await api.user.getBalance();
       setBalance(data.balance);
       setDaysLeft(data.daysLeft);
