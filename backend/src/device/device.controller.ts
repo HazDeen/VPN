@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, Param, Delete, Put, Req, UseGuards, Logger, BadRequestException } from '@nestjs/common';
 import { DeviceService } from './device.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
-import { TelegramGuard } from '../auth/guards/telegram/telegram.guard';
+// import { TelegramGuard } from '../auth/guards/telegram/telegram.guard';
 
 @Controller('devices')
-@UseGuards(TelegramGuard)
+// @UseGuards(TelegramGuard)
 export class DeviceController {
   private readonly logger = new Logger(DeviceController.name);
 
