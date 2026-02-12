@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { TelegramGuard } from './guards/telegram/telegram.guard';
 
@@ -7,16 +7,15 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('telegram')
-  @UseGuards(TelegramGuard) // 👈 ЗАКОММЕНТИРУЙ
+  @UseGuards(TelegramGuard)
   async telegramAuth(@Req() req) {
-    // 👇 ИСПОЛЬЗУЕМ ТЕСТОВОГО ПОЛЬЗОВАТЕЛЯ
-    const testUser = {
-      id: 123456789,
-      first_name: 'Test',
-      last_name: 'User',
-      username: 'testuser'
-    };
-    const user = await this.authService.findOrCreateUser(testUser);
+    console.log('🔐 Auth request received');
+    console.log('👤 User from guard:', req.user);
+    
+    const user = await this.authService.findOrCreateUser(req.user);
+    
+    console.log('📦 User from DB:', user);
+    
     return {
       success: true,
       user: {
@@ -31,9 +30,8 @@ export class AuthController {
   }
 
   @Get('me')
-  // @UseGuards(TelegramGuard) // 👈 ЗАКОММЕНТИРУЙ
+  @UseGuards(TelegramGuard)
   async getMe(@Req() req) {
-    // Тестовый пользователь с ID 1
-    return this.authService.getMe(BigInt(1));
+    return this.authService.getMe(req.user.id);
   }
 }

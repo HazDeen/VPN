@@ -4,25 +4,21 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // 👇 ВКЛЮЧАЕМ CORS - ЭТО РЕШИТ ПРОБЛЕМУ!
   app.enableCors({
-  origin: [
-    'https://vpnvpn-backend.onrender.com', // 👈 ТВОЙ URL!
-    'https://t.me',
-    'https://telegram.org'
-  ],
-  credentials: true,
-});
-  
-  app.use('/', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    service: 'vpn-backend',
-    timestamp: new Date().toISOString() 
+    origin: [
+      'https://vpn-frontend.pages.dev', // Cloudflare
+      'https://vpn-frontend.netlify.app', // Netlify
+      'https://vpn-frontend.vercel.app', // Vercel
+      'https://t.me',
+      'https://telegram.org',
+    ],
+    credentials: true,
   });
-});
-
-  await app.listen(process.env.PORT || 3001);
-  console.log(`🚀 Backend running on: http://localhost:${process.env.PORT || 3001}`);
+  
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
+  console.log(`✅ Server running on port ${port}`);
+  console.log(`📍 http://localhost:${port}`);
+  console.log(`🌍 Railway URL: https://vpn-production-702c.up.railway.app`);
 }
 bootstrap();

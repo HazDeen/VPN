@@ -6,11 +6,15 @@ export class AuthService {
   constructor(private prisma: PrismaService) {}
 
   async findOrCreateUser(telegramUser: any) {
+    console.log('📥 Telegram user data:', telegramUser);
+    
     let user = await this.prisma.user.findUnique({
       where: { telegramId: BigInt(telegramUser.id) },
     });
 
     if (!user) {
+      console.log('🆕 Creating new user...');
+      
       user = await this.prisma.user.create({
         data: {
           telegramId: BigInt(telegramUser.id),
@@ -20,6 +24,10 @@ export class AuthService {
           balance: 0,
         },
       });
+      
+      console.log('✅ User created:', user.id);
+    } else {
+      console.log('✅ User found:', user.id);
     }
 
     return user;
@@ -30,7 +38,7 @@ export class AuthService {
       where: { id: userId },
     });
 
-    if (!user) {  // 👈 ДОБАВЛЯЕМ ПРОВЕРКУ!
+    if (!user) {
       throw new NotFoundException('User not found');
     }
 

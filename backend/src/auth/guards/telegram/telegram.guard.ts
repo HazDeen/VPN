@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
 import * as crypto from 'crypto';
 
@@ -68,9 +68,10 @@ export class TelegramGuard implements CanActivate {
         username: user.username || '',
       };
 
+      console.log('✅ Auth success for user:', user.id);
       return true;
     } catch (error) {
-      console.error('Telegram auth error:', error);
+      console.error('❌ Telegram auth error:', error);
       throw new UnauthorizedException('Telegram auth failed');
     }
   }
