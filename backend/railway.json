@@ -1,8 +1,0 @@
-{
-  "deploy": {
-    "startCommand": "npm run build && npm run prisma:migrate && npm run start:prod",
-    "healthcheckPath": "/",
-    "healthcheckTimeout": 100,
-    "restartPolicyType": "ON_FAILURE"
-  }
-}
