@@ -7,14 +7,23 @@ const getInitData = (): string => {
       // @ts-ignore
       return window.Telegram.WebApp.initData;
     }
+    
+    // ✅ ПОДДЕРЖКА TELEGRAM WEB
+    // @ts-ignore
+    if (window.Telegram?.WebView?.initParams?.tgWebAppData) {
+      // @ts-ignore
+      return window.Telegram.WebView.initParams.tgWebAppData;
+    }
+    
+    // ✅ ДЛЯ ТЕСТА ВНЕ TELEGRAM - РАСКОММЕНТИРУЙ
+    return "query_id=AAH5VE4M...&user=%7B%22id%22%3A1314191617%7D";
+    
   } catch (e) {
     console.warn('Not in Telegram environment');
   }
   
-  // Для теста вне Telegram (раскомментируй если нужно)
-  // return "query_id=AAHd3N4zAAAAAN03jvTvzSnT&user=%7B%22id%22%3A123456789%2C%22first_name%22%3A%22Test%22%7D&auth_date=1739347200&hash=89d6079ad7faf5d3f80f7f1b4e3f8d2b1e7c5a9b4d6f8e2a4c6b8d0a2c4e6f8";
-  
-  return ''; // 👈 ВСЕГДА ВОЗВРАЩАЙ ЧТО-ТО!
+  console.warn('⚠️ No initData found');
+  return '';
 };
 
 async function apiFetch(endpoint: string, options: RequestInit = {}) {

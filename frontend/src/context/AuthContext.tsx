@@ -29,11 +29,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
       console.log('🔐 Login started...');
       
-      // ✅ 1. Сначала авторизуемся
+      // ✅ ПРОВЕРЯЕМ INITDATA
+      // @ts-ignore
+      const initData = window.Telegram?.WebApp?.initData || window.Telegram?.WebView?.initParams?.tgWebAppData;
+      console.log('📦 initData exists:', !!initData);
+      
       const authData = await api.auth.telegram();
       console.log('✅ Auth response:', authData);
       
-      // ✅ 2. Получаем профиль с балансом
       const profileData = await api.user.getProfile();
       console.log('✅ Profile response:', profileData);
       
