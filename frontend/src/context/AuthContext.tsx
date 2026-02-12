@@ -7,7 +7,7 @@ interface User {
   firstName: string;
   lastName: string;
   username: string;
-  balance: number;  // ✅ БАЛАНС ДОЛЖЕН БЫТЬ!
+  balance: number;
 }
 
 interface AuthContextType {
@@ -27,29 +27,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = async () => {
     try {
       setLoading(true);
-      console.log('🔐 Attempting to login...');
+      console.log('🔐 Login started...');
       
-      // @ts-ignore
-      const hasInitData = !!window.Telegram?.WebApp?.initData;
-      console.log('📦 initData exists:', hasInitData);
-      
-      if (!hasInitData) {
-        console.log('⚠️ Not in Telegram environment');
-        setLoading(false);
-        return;
-      }
-      
-      // 1️⃣ АВТОРИЗАЦИЯ
+      // ✅ 1. Сначала авторизуемся
       const authData = await api.auth.telegram();
       console.log('✅ Auth response:', authData);
       
-      // 2️⃣ ПОЛУЧАЕМ ПРОФИЛЬ С БАЛАНСОМ!
+      // ✅ 2. Получаем профиль с балансом
       const profileData = await api.user.getProfile();
-      console.log('👤 Profile response:', profileData);
+      console.log('✅ Profile response:', profileData);
       
-      // 3️⃣ СОХРАНЯЕМ ПОЛЬЗОВАТЕЛЯ С БАЛАНСОМ!
       setUser(profileData);
-      
     } catch (error) {
       console.error('❌ Login failed:', error);
     } finally {
@@ -57,19 +45,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-  };
-
+  const logout = () => setUser(null);
+  
   const updateBalance = (newBalance: number) => {
-    if (user) {
-      setUser({ ...user, balance: newBalance });
-    }
+    if (user) setUser({ ...user, balance: newBalance });
   };
 
-  useEffect(() => {
-    login();
-  }, []);
+  useEffect(() => { login(); }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, updateBalance }}>
@@ -80,9 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 };
 

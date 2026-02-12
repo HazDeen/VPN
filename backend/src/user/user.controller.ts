@@ -1,20 +1,21 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
-import { TelegramGuard } from '../auth/guards/telegram/telegram.guard'; // 👈 ЗАКОММЕНТИРУЙ
+import { TelegramGuard } from '../auth/guards/telegram/telegram.guard';
 
 @Controller('user')
-@UseGuards(TelegramGuard) // 👈 ЗАКОММЕНТИРУЙ
+@UseGuards(TelegramGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('balance')
   async getBalance(@Req() req) {
-    // Тестовый пользователь с ID 1
-    return this.userService.getBalance(BigInt(1));
+    // ✅ БЕРЁМ ID ИЗ ЗАПРОСА, А НЕ ЗАГЛУШКУ!
+    return this.userService.getBalance(req.user.id);
   }
 
   @Get('profile')
   async getProfile(@Req() req) {
-    return this.userService.getProfile(BigInt(1));
+    // ✅ ТОЖЕ БЕРЁМ ИЗ ЗАПРОСА
+    return this.userService.getProfile(req.user.id);
   }
 }
