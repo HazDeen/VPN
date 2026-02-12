@@ -1,14 +1,11 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { Telegraf } from 'telegraf';
 import { PrismaService } from '../prisma/prisma.service';
-import { LoggerService, createLogger } from '../logger/logger.service';
-import { botLogger, formatIncoming, formatOutgoing } from './bot.logger';
 
 @Injectable()
 export class BotService implements OnModuleInit, OnModuleDestroy {
   private bot: Telegraf;
-  private readonly logger: LoggerService;
-  private readonly ADMIN_ID = 1314191617;
+  private readonly logger = new Logger(BotService.name);
 
   constructor(private prisma: PrismaService) {
     const botToken = process.env.BOT_TOKEN;
@@ -16,9 +13,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       throw new Error('❌ BOT_TOKEN не настроен в .env');
     }
     this.bot = new Telegraf(botToken);
-    
-    // ✅ СОЗДАЕМ ЛОГГЕР ЧЕРЕЗ ФАБРИКУ
-    this.logger = createLogger('🤖 BOT');
   }
 
   async onModuleInit() {
@@ -27,200 +21,168 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
 
       // Проверяем токен
       const botInfo = await this.bot.telegram.getMe();
-      this.logger.log(`✅ Бот авторизован: @${botInfo.username} (ID: ${botInfo.id})`);
+      this.logger.log(`✅ Бот авторизован: @${botInfo.username}`);
 
       // Сбрасываем вебхуки
       await this.bot.telegram.deleteWebhook({ drop_pending_updates: true });
       this.logger.log('🔄 Webhook сброшен');
 
       // ==========================================
-      // 👤 КОМАНДА /start - РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ
+      // КОМАНДА /start - РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ
       // ==========================================
       this.bot.command('start', async (ctx) => {
-        const startTime = Date.now();
-        const incoming = formatIncoming(ctx);
-        
         try {
-          this.logger.log(`📥 Входящая команда: ${JSON.stringify(incoming)}`);
-
           const telegramId = ctx.from.id;
           const firstName = ctx.from.first_name || '';
           const lastName = ctx.from.last_name || '';
           const username = ctx.from.username || '';
 
-          // Ищем пользователя в БД
-          let user = await this.prisma.user.findUnique({
+          this.logger.log(`📥 /start от @${username} (${telegramId})`);
+
+          // ✅ ВАЖНО: Конвертируем BigInt в Number/String перед отправкой!
+          const user = await this.prisma.user.upsert({
             where: { telegramId: BigInt(telegramId) },
+            update: {
+              firstName,
+              lastName,
+              username,
+            },
+            create: {
+              telegramId: BigInt(telegramId),
+              firstName,
+              lastName,
+              username,
+              balance: 0,
+            },
           });
 
-          if (!user) {
-            // Создаём нового пользователя
-            user = await this.prisma.user.create({
-              data: {
-                telegramId: BigInt(telegramId),
-                firstName,
-                lastName,
-                username,
-                balance: 0,
-              },
-            });
-            
-            this.logger.log(`✅ Новый пользователь создан: ${JSON.stringify(formatOutgoing({ 
-              id: user.id, 
-              telegramId: user.telegramId.toString(),
-              balance: user.balance 
-            }))}`);
+          // ✅ Конвертируем BigInt в Number для безопасного вывода
+          const balance = Number(user.balance);
+          const userId = Number(user.id);
 
-            // УВЕДОМЛЕНИЕ АДМИНУ
-            await this.logger.notifyAdmin(
-              this.bot,
-              this.ADMIN_ID,
-              '🎉 Новый пользователь!',
-              {
-                id: user.id,
-                telegramId: user.telegramId.toString(),
-                firstName,
-                lastName,
-                username,
-                balance: user.balance
-              }
-            );
-            
-            await ctx.reply(
-              `🎉 Добро пожаловать, ${firstName}!\n\n` +
-              `💰 Твой баланс: ${user.balance} ₽\n` +
-              `🚀 Открой Mini App, чтобы начать пользоваться VPN!`,
-              {
-                reply_markup: {
-                  inline_keyboard: [
-                    [{ text: '🌐 Открыть VPN', web_app: { url: process.env.FRONTEND_URL || 'https://vpn-frontend.netlify.app' } }]
-                  ]
-                }
-              }
-            );
-          } else {
-            // Обновляем данные существующего пользователя
-            user = await this.prisma.user.update({
-              where: { telegramId: BigInt(telegramId) },
-              data: {
-                firstName,
-                lastName,
-                username,
-              },
-            });
-            
-            this.logger.log(`👤 Пользователь авторизован: ${JSON.stringify(formatOutgoing({ 
-              id: user.id, 
-              balance: user.balance 
-            }))}`);
-            
-            await ctx.reply(
-              `👋 С возвращением, ${firstName}!\n\n` +
-              `💰 Твой баланс: ${user.balance} ₽\n` +
-              `🚀 Открыть Mini App:`,
-              {
-                reply_markup: {
-                  inline_keyboard: [
-                    [{ text: '🌐 Открыть VPN', web_app: { url: process.env.FRONTEND_URL || 'https://vpn-frontend.netlify.app' } }]
-                  ]
-                }
-              }
-            );
-          }
+          this.logger.log(`✅ Пользователь ${userId}, баланс: ${balance} ₽`);
 
-          const responseTime = Date.now() - startTime;
-          this.logger.log(`✅ Команда /start выполнена за ${responseTime}ms`);
-
-        } catch (error) {
-          this.logger.error(`❌ Ошибка /start: ${error.message}`);
-          this.logger.error(`❌ Stack: ${error.stack}`);
-          
-          await this.logger.notifyAdmin(
-            this.bot,
-            this.ADMIN_ID,
-            '❌ Ошибка в /start',
+          await ctx.reply(
+            `🎉 Добро пожаловать, ${firstName}!\n\n` +
+            `💰 Твой баланс: ${balance} ₽\n` +
+            `🚀 Открой Mini App, чтобы начать пользоваться VPN!`,
             {
-              error: error.message,
-              stack: error.stack,
-              incoming: incoming
+              reply_markup: {
+                inline_keyboard: [
+                  [{ 
+                    text: '🌐 Открыть VPN', 
+                    web_app: { 
+                      url: process.env.FRONTEND_URL || 'https://vpn-frontend.netlify.app' 
+                    } 
+                  }]
+                ]
+              }
             }
           );
-          
+        } catch (error) {
+          const err = error as Error;
+          this.logger.error(`❌ Ошибка /start: ${err.message}`);
           await ctx.reply('⚠️ Произошла ошибка. Попробуй позже.');
         }
       });
 
       // ==========================================
-      // 👑 АДМИНСКАЯ КОМАНДА /logs
+      // КОМАНДА /balance - ПРОВЕРКА БАЛАНСА
       // ==========================================
-      this.bot.command('logs', async (ctx) => {
-        if (ctx.from.id !== this.ADMIN_ID) {
-          await ctx.reply('⛔ У тебя нет прав администратора');
-          return;
-        }
-
+      this.bot.command('balance', async (ctx) => {
         try {
-          const fs = require('fs');
-          const path = require('path');
-          const logsPath = path.join(process.cwd(), 'logs', 'console.log');
+          const telegramId = ctx.from.id;
           
-          if (fs.existsSync(logsPath)) {
-            const logs = fs.readFileSync(logsPath, 'utf8');
-            const lastLines = logs.split('\n').slice(-20).join('\n');
-            
-            // Разбиваем на части, если сообщение слишком длинное
-            const chunks = lastLines.match(/(.|[\r\n]){1,4000}/g) || [];
-            
-            await ctx.reply(`📋 **Последние логи:**\n\`\`\`\n${chunks[0]}\n\`\`\``, 
-              { parse_mode: 'Markdown' });
-            
-            for (let i = 1; i < chunks.length; i++) {
-              await ctx.reply(`\`\`\`\n${chunks[i]}\n\`\`\``, { parse_mode: 'Markdown' });
-            }
-          } else {
-            await ctx.reply('❌ Логи не найдены');
+          const user = await this.prisma.user.findUnique({
+            where: { telegramId: BigInt(telegramId) },
+          });
+
+          if (!user) {
+            await ctx.reply('❌ Ты ещё не зарегистрирован. Напиши /start');
+            return;
           }
+
+          // ✅ Конвертируем BigInt в Number
+          const balance = Number(user.balance);
+          const userId = Number(user.id);
+
+          const activeDevices = await this.prisma.device.count({
+            where: {
+              userId: user.id,
+              isActive: true,
+            },
+          });
+
+          const dailyRate = activeDevices * 10;
+          const daysLeft = dailyRate > 0 ? Math.floor(balance / dailyRate) : 30;
+          const displayDays = daysLeft > 30 ? 30 : daysLeft;
+
+          await ctx.reply(
+            `💰 Твой баланс: ${balance} ₽\n` +
+            `📱 Активных устройств: ${activeDevices}\n` +
+            `⏳ Хватит на ~${displayDays} дней`
+          );
         } catch (error) {
-          this.logger.error(`❌ Ошибка /logs: ${error.message}`);
-          await ctx.reply('⚠️ Ошибка при получении логов');
+          const err = error as Error;
+          this.logger.error(`❌ Ошибка /balance: ${err.message}`);
+          await ctx.reply('⚠️ Не удалось получить баланс');
         }
       });
 
       // ==========================================
-      // ... ОСТАЛЬНЫЕ КОМАНДЫ
+      // КОМАНДА /app - ССЫЛКА НА MINI APP
       // ==========================================
-      
-      // Запускаем бота
+      this.bot.command('app', async (ctx) => {
+        try {
+          const frontendUrl = process.env.FRONTEND_URL || 'https://vpn-frontend.netlify.app';
+          
+          await ctx.reply('🚀 Открыть Mini App:', {
+            reply_markup: {
+              inline_keyboard: [
+                [{ 
+                  text: '🌐 Открыть VPN', 
+                  web_app: { url: frontendUrl } 
+                }],
+              ],
+            },
+          });
+        } catch (error) {
+          const err = error as Error;
+          this.logger.error(`❌ Ошибка /app: ${err.message}`);
+        }
+      });
+
+      // ==========================================
+      // КОМАНДА /help - ПОМОЩЬ
+      // ==========================================
+      this.bot.command('help', async (ctx) => {
+        await ctx.reply(
+          `📚 Доступные команды:\n\n` +
+          `/start - Начать работу\n` +
+          `/balance - Проверить баланс\n` +
+          `/app - Открыть Mini App\n` +
+          `/help - Показать это сообщение`
+        );
+      });
+
+      // ==========================================
+      // ЗАПУСК БОТА
+      // ==========================================
       await this.bot.launch({
         dropPendingUpdates: true,
       });
       
       this.logger.log('✅ Бот успешно запущен!');
       
-      await this.logger.notifyAdmin(
-        this.bot,
-        this.ADMIN_ID,
-        '🚀 Бот успешно запущен!',
-        { timestamp: new Date().toISOString() }
-      );
-
     } catch (error) {
-      this.logger.error(`❌ Критическая ошибка запуска бота: ${error.message}`);
-      this.logger.error(`❌ Stack: ${error.stack}`);
+      const err = error as Error;
+      this.logger.error(`❌ Критическая ошибка: ${err.message}`);
     }
   }
 
   async onModuleDestroy() {
     this.logger.log('🛑 Останавливаем бота...');
     await this.bot.stop();
-    
-    await this.logger.notifyAdmin(
-      this.bot,
-      this.ADMIN_ID,
-      '🛑 Бот остановлен',
-      { timestamp: new Date().toISOString() }
-    );
-    
     this.logger.log('✅ Бот остановлен');
   }
 }
