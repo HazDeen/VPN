@@ -1,10 +1,12 @@
-import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { randomBytes } from 'crypto';
 
 @Injectable()
 export class DeviceService {
+  private readonly logger = new Logger(DeviceService.name);
+
   constructor(private prisma: PrismaService) {}
 
   private generateConfigLink(): string {
@@ -14,6 +16,8 @@ export class DeviceService {
 
   async getUserDevices(userId: bigint) {
     try {
+      this.logger.log(`📊 Getting devices for user ${userId}`);
+      
       const devices = await this.prisma.device.findMany({
         where: { userId },
         include: {
@@ -22,8 +26,10 @@ export class DeviceService {
         orderBy: { connectedAt: 'desc' },
       });
 
+      this.logger.log(`✅ Found ${devices.length} devices for user ${userId}`);
+
       return devices.map(device => ({
-        id: Number(device.id), // 👈 КОНВЕРТИРУЕМ BigInt в Number
+        id: Number(device.id),
         name: device.customName || device.name,
         model: device.name,
         type: device.type,
@@ -39,17 +45,21 @@ export class DeviceService {
           : 0,
       }));
     } catch (error) {
-      console.error('Get devices error:', error);
-      throw new InternalServerErrorException('Failed to get devices');
+      this.logger.error(`❌ Error in getUserDevices: ${error.message}`);
+      throw error;
     }
   }
 
   async addDevice(userId: bigint, dto: CreateDeviceDto) {
     try {
+      this.logger.log(`➕ Adding device for user ${userId}: ${JSON.stringify(dto)}`);
+      
       // Проверяем лимит устройств
       const devicesCount = await this.prisma.device.count({
         where: { userId },
       });
+
+      this.logger.log(`📊 User ${userId} has ${devicesCount} devices`);
 
       if (devicesCount >= 5) {
         throw new BadRequestException('Maximum 5 devices allowed');
@@ -67,8 +77,10 @@ export class DeviceService {
         },
       });
 
+      this.logger.log(`✅ Device created: ${device.id} for user ${userId}`);
+
       return {
-        id: Number(device.id), // 👈 КОНВЕРТИРУЕМ
+        id: Number(device.id),
         name: device.customName,
         model: device.name,
         type: device.type,
@@ -76,16 +88,15 @@ export class DeviceService {
         isActive: device.isActive,
       };
     } catch (error) {
-      console.error('Add device error:', error);
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Failed to add device');
+      this.logger.error(`❌ Error in addDevice: ${error.message}`);
+      throw error;
     }
   }
 
   async replaceDevice(deviceId: bigint, userId: bigint) {
     try {
+      this.logger.log(`🔄 Replacing device ${deviceId} for user ${userId}`);
+      
       const device = await this.prisma.device.findFirst({
         where: {
           id: deviceId,
@@ -94,7 +105,7 @@ export class DeviceService {
       });
 
       if (!device) {
-        throw new BadRequestException('Device not found');
+        throw new NotFoundException('Device not found');
       }
 
       const updated = await this.prisma.device.update({
@@ -105,20 +116,21 @@ export class DeviceService {
         },
       });
 
+      this.logger.log(`✅ Device ${deviceId} replaced`);
+
       return {
         configLink: updated.configLink,
       };
     } catch (error) {
-      console.error('Replace device error:', error);
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Failed to replace device');
+      this.logger.error(`❌ Error in replaceDevice: ${error.message}`);
+      throw error;
     }
   }
 
   async deleteDevice(deviceId: bigint, userId: bigint) {
     try {
+      this.logger.log(`🗑️ Deleting device ${deviceId} for user ${userId}`);
+      
       const device = await this.prisma.device.findFirst({
         where: {
           id: deviceId,
@@ -127,25 +139,26 @@ export class DeviceService {
       });
 
       if (!device) {
-        throw new BadRequestException('Device not found');
+        throw new NotFoundException('Device not found');
       }
 
       await this.prisma.device.delete({
         where: { id: deviceId },
       });
 
+      this.logger.log(`✅ Device ${deviceId} deleted`);
+
       return { success: true };
     } catch (error) {
-      console.error('Delete device error:', error);
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Failed to delete device');
+      this.logger.error(`❌ Error in deleteDevice: ${error.message}`);
+      throw error;
     }
   }
 
   async updateDeviceName(deviceId: bigint, userId: bigint, customName: string) {
     try {
+      this.logger.log(`✏️ Updating device ${deviceId} name to: ${customName}`);
+      
       const device = await this.prisma.device.findFirst({
         where: {
           id: deviceId,
@@ -154,7 +167,7 @@ export class DeviceService {
       });
 
       if (!device) {
-        throw new BadRequestException('Device not found');
+        throw new NotFoundException('Device not found');
       }
 
       const updated = await this.prisma.device.update({
@@ -165,15 +178,14 @@ export class DeviceService {
         },
       });
 
+      this.logger.log(`✅ Device ${deviceId} name updated`);
+
       return {
         customName: updated.customName,
       };
     } catch (error) {
-      console.error('Update device name error:', error);
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Failed to update device name');
+      this.logger.error(`❌ Error in updateDeviceName: ${error.message}`);
+      throw error;
     }
   }
 }

@@ -43,16 +43,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Для теста - показываем хоть что-то
       // @ts-ignore
       if (!window.Telegram?.WebApp?.initData) {
-        console.log('⚠️ Not in Telegram, using test user');
-        setUser({
-          id: 1,
-          telegramId: '123456789',
-          firstName: 'Test',
-          lastName: '',
-          username: 'test',
-          balance: 1000
-        });
-      }
+  console.log('⚠️ Not in Telegram environment');
+  // Не создаём тестового пользователя!
+}
     } finally {
       setLoading(false);
     }

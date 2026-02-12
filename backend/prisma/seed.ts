@@ -14,7 +14,7 @@ async function main() {
       firstName: 'Test',
       lastName: 'User',
       username: 'testuser',
-      balance: 1000, // 1000 ₽ на балансе
+      balance: 0, // 1000 ₽ на балансе
     },
   });
 

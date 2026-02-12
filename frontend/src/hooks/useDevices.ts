@@ -9,16 +9,25 @@ export const useDevices = () => {
   const fetchDevices = async () => {
     try {
       setLoading(true);
+      console.log('📱 Fetching devices...');
+      
       const data = await api.devices.getAll();
+      console.log('✅ Devices response:', data);
       
       const typedDevices = data.map((d: any) => ({
-        ...d,
-        type: d.type as DeviceType
+        id: d.id,
+        name: d.name || '',
+        model: d.model || '',
+        type: d.type as DeviceType,
+        date: d.date || '',
+        isActive: d.isActive || false,
+        configLink: d.configLink || '',
+        daysLeft: d.daysLeft || 0
       }));
       
       setDevices(typedDevices);
     } catch (error) {
-      console.error('Failed to fetch devices:', error);
+      console.error('❌ Failed to fetch devices:', error);
     } finally {
       setLoading(false);
     }
@@ -26,44 +35,58 @@ export const useDevices = () => {
 
   const addDevice = async (name: string, customName: string, type: DeviceType) => {
     try {
-      await api.devices.add({ name, customName, type });
+      console.log('➕ Adding device:', { name, customName, type });
+      
+      const response = await api.devices.add({ 
+        name, 
+        customName: customName || name, 
+        type 
+      });
+      
+      console.log('✅ Device added response:', response);
       await fetchDevices();
+      return response;
     } catch (error) {
-      console.error('Failed to add device:', error);
+      console.error('❌ Failed to add device:', error);
       throw error;
     }
   };
 
-
-    const replaceDevice = async (deviceId: number) => {
+  const replaceDevice = async (deviceId: number) => {
     try {
-        await api.devices.replace(deviceId);
-        await fetchDevices(); // Обновляем список
+      console.log('🔄 Replacing device:', deviceId);
+      const response = await api.devices.replace(deviceId);
+      await fetchDevices();
+      return response;
     } catch (error) {
-        console.error('Failed to replace device:', error);
-        throw error;
+      console.error('❌ Failed to replace device:', error);
+      throw error;
     }
-    };
+  };
 
-    const deleteDevice = async (deviceId: number) => {
+  const deleteDevice = async (deviceId: number) => {
     try {
-        await api.devices.delete(deviceId);
-        await fetchDevices(); // Обновляем список
+      console.log('🗑️ Deleting device:', deviceId);
+      const response = await api.devices.delete(deviceId);
+      await fetchDevices();
+      return response;
     } catch (error) {
-        console.error('Failed to delete device:', error);
-        throw error;
+      console.error('❌ Failed to delete device:', error);
+      throw error;
     }
-    };
+  };
 
-    const updateDeviceName = async (deviceId: number, customName: string) => {
+  const updateDeviceName = async (deviceId: number, customName: string) => {
     try {
-        await api.devices.updateName(deviceId, customName);
-        await fetchDevices(); // Обновляем список
+      console.log('✏️ Updating device name:', { deviceId, customName });
+      const response = await api.devices.updateName(deviceId, customName);
+      await fetchDevices();
+      return response;
     } catch (error) {
-        console.error('Failed to update device name:', error);
-        throw error;
+      console.error('❌ Failed to update device name:', error);
+      throw error;
     }
-    };
+  };
 
   useEffect(() => {
     fetchDevices();
@@ -74,8 +97,8 @@ export const useDevices = () => {
     loading,
     fetchDevices,
     addDevice,
-    replaceDevice,  
-    deleteDevice,   
+    replaceDevice,
+    deleteDevice,
     updateDeviceName
   };
 };
