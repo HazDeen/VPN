@@ -6,6 +6,9 @@ import { PrismaService } from '../prisma/prisma.service';
 export class BotService implements OnModuleInit, OnModuleDestroy {
   private bot: Telegraf;
   private readonly logger = new Logger(BotService.name);
+  
+  // 👑 ID АДМИНА - ЗАМЕНИ НА СВОЙ TELEGRAM ID!
+  private readonly ADMIN_ID = 1314191617; // ⚠️ ВСТАВЬ СВОЙ ID!
 
   constructor(private prisma: PrismaService) {
     const botToken = process.env.BOT_TOKEN;
@@ -15,6 +18,26 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
     this.bot = new Telegraf(botToken);
   }
 
+  // ==========================================
+  // 📢 ОТПРАВКА УВЕДОМЛЕНИЙ АДМИНУ
+  // ==========================================
+  private async notifyAdmin(message: string, data?: any) {
+    try {
+      const text = data 
+        ? `🔔 ${message}\n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``
+        : `🔔 ${message}`;
+      
+      await this.bot.telegram.sendMessage(this.ADMIN_ID, text, {
+        parse_mode: 'Markdown'
+      });
+    } catch (error) {
+      this.logger.error(`❌ Не удалось отправить уведомление админу: ${error.message}`);
+    }
+  }
+
+  // ==========================================
+  // 🚀 ЗАПУСК БОТА
+  // ==========================================
   async onModuleInit() {
     try {
       this.logger.log('🚀 Бот запускается...');
@@ -23,12 +46,12 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       const botInfo = await this.bot.telegram.getMe();
       this.logger.log(`✅ Бот авторизован: @${botInfo.username} (ID: ${botInfo.id})`);
 
-      // Сбрасываем вебхуки и удаляем все ожидающие обновления
+      // Сбрасываем вебхуки
       await this.bot.telegram.deleteWebhook({ drop_pending_updates: true });
       this.logger.log('🔄 Webhook сброшен');
 
       // ==========================================
-      // КОМАНДА /start - РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ
+      // 👤 КОМАНДА /start - РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ
       // ==========================================
       this.bot.command('start', async (ctx) => {
         try {
@@ -52,10 +75,15 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
                 firstName,
                 lastName,
                 username,
-                balance: 0, // Стартовый баланс 0
+                balance: 0,
               },
             });
-            this.logger.log(`✅ Новый пользователь создан: ${telegramId}`);
+            
+            // 📢 УВЕДОМЛЕНИЕ АДМИНУ О НОВОМ ПОЛЬЗОВАТЕЛЕ!
+            await this.notifyAdmin(
+              `🎉 Новый пользователь!\nID: ${telegramId}\nИмя: ${firstName} ${lastName}\nUsername: @${username}`,
+              { id: user.id, telegramId: user.telegramId.toString(), balance: user.balance }
+            );
             
             await ctx.reply(
               `🎉 Добро пожаловать, ${firstName}!\n\n` +
@@ -80,8 +108,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
               },
             });
             
-            this.logger.log(`👤 Пользователь уже есть: ${telegramId}, баланс: ${user.balance} ₽`);
-            
             await ctx.reply(
               `👋 С возвращением, ${firstName}!\n\n` +
               `💰 Твой баланс: ${user.balance} ₽\n` +
@@ -103,12 +129,153 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       });
 
       // ==========================================
-      // КОМАНДА /balance - ПРОВЕРКА БАЛАНСА
+      // 👑 АДМИНСКИЕ КОМАНДЫ
       // ==========================================
+      
+      // 📊 Статистика
+      this.bot.command('admin_stats', async (ctx) => {
+        if (ctx.from.id !== this.ADMIN_ID) {
+          await ctx.reply('⛔ У тебя нет прав администратора');
+          return;
+        }
+
+        try {
+          const totalUsers = await this.prisma.user.count();
+          const totalDevices = await this.prisma.device.count();
+          const activeDevices = await this.prisma.device.count({ where: { isActive: true } });
+          const totalBalance = await this.prisma.user.aggregate({ _sum: { balance: true } });
+          const todayTransactions = await this.prisma.transaction.count({
+            where: {
+              createdAt: {
+                gte: new Date(new Date().setHours(0, 0, 0, 0))
+              }
+            }
+          });
+
+          const stats = `📊 **СТАТИСТИКА БОТА**\n\n` +
+            `👥 Пользователей: ${totalUsers}\n` +
+            `📱 Устройств всего: ${totalDevices}\n` +
+            `✅ Активных устройств: ${activeDevices}\n` +
+            `💰 Общий баланс: ${totalBalance._sum.balance || 0} ₽\n` +
+            `📈 Транзакций сегодня: ${todayTransactions}`;
+
+          await ctx.reply(stats, { parse_mode: 'Markdown' });
+          
+          // 📢 УВЕДОМЛЕНИЕ О ЗАПРОСЕ СТАТИСТИКИ
+          await this.notifyAdmin(`📊 Админ запросил статистику`);
+          
+        } catch (error) {
+          const err = error as Error;
+          this.logger.error(`❌ Ошибка /admin_stats: ${err.message}`);
+          await ctx.reply('⚠️ Ошибка при получении статистики');
+        }
+      });
+
+      // 💰 Начислить баланс пользователю
+      this.bot.command('admin_add', async (ctx) => {
+        if (ctx.from.id !== this.ADMIN_ID) {
+          await ctx.reply('⛔ У тебя нет прав администратора');
+          return;
+        }
+
+        try {
+          const args = ctx.message.text.split(' ');
+          if (args.length < 3) {
+            await ctx.reply('❌ Формат: /admin_add <telegram_id> <сумма>');
+            return;
+          }
+
+          const telegramId = parseInt(args[1]);
+          const amount = parseInt(args[2]);
+
+          if (isNaN(telegramId) || isNaN(amount)) {
+            await ctx.reply('❌ ID и сумма должны быть числами');
+            return;
+          }
+
+          const user = await this.prisma.user.findUnique({
+            where: { telegramId: BigInt(telegramId) },
+          });
+
+          if (!user) {
+            await ctx.reply('❌ Пользователь не найден');
+            return;
+          }
+
+          await this.prisma.user.update({
+            where: { telegramId: BigInt(telegramId) },
+            data: { balance: { increment: amount } },
+          });
+
+          await ctx.reply(`✅ Баланс пользователя ${telegramId} увеличен на ${amount} ₽`);
+          
+          // Уведомление пользователю
+          await this.bot.telegram.sendMessage(
+            telegramId,
+            `💰 Вам начислено ${amount} ₽!\nПроверь баланс командой /balance`
+          );
+
+          // 📢 УВЕДОМЛЕНИЕ АДМИНУ
+          await this.notifyAdmin(
+            `💰 Админ начислил ${amount} ₽ пользователю ${telegramId}`,
+            { telegramId, amount, adminId: ctx.from.id }
+          );
+
+        } catch (error) {
+          const err = error as Error;
+          this.logger.error(`❌ Ошибка /admin_add: ${err.message}`);
+          await ctx.reply('⚠️ Ошибка при начислении баланса');
+        }
+      });
+
+      // 👥 Список пользователей
+      this.bot.command('admin_users', async (ctx) => {
+        if (ctx.from.id !== this.ADMIN_ID) {
+          await ctx.reply('⛔ У тебя нет прав администратора');
+          return;
+        }
+
+        try {
+          const users = await this.prisma.user.findMany({
+            take: 10,
+            orderBy: { createdAt: 'desc' },
+          });
+
+          let message = '👥 **Последние 10 пользователей:**\n\n';
+          users.forEach((user, index) => {
+            message += `${index + 1}. ID: ${user.telegramId}\n`;
+            message += `   Имя: ${user.firstName} ${user.lastName}\n`;
+            message += `   Username: @${user.username || 'нет'}\n`;
+            message += `   Баланс: ${user.balance} ₽\n`;
+            message += `   Дата: ${user.createdAt.toLocaleDateString()}\n\n`;
+          });
+
+          await ctx.reply(message, { parse_mode: 'Markdown' });
+          
+          // 📢 УВЕДОМЛЕНИЕ АДМИНУ
+          await this.notifyAdmin(`👥 Админ запросил список пользователей`);
+
+        } catch (error) {
+          const err = error as Error;
+          this.logger.error(`❌ Ошибка /admin_users: ${err.message}`);
+          await ctx.reply('⚠️ Ошибка при получении списка пользователей');
+        }
+      });
+
+      // ==========================================
+      // 📱 ОТСЛЕЖИВАНИЕ СОБЫТИЙ В MINI APP
+      // ==========================================
+      
+      // Эндпоинт для логов из Mini App
+      this.bot.telegram.setWebhook(`${process.env.BACKEND_URL}/bot-webhook`);
+      
+      // ==========================================
+      // 👤 ОБЫЧНЫЕ КОМАНДЫ
+      // ==========================================
+      
       this.bot.command('balance', async (ctx) => {
         try {
           const telegramId = ctx.from.id;
-          
           const user = await this.prisma.user.findUnique({
             where: { telegramId: BigInt(telegramId) },
           });
@@ -118,7 +285,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
             return;
           }
 
-          // Получаем количество активных устройств
           const activeDevices = await this.prisma.device.count({
             where: {
               userId: user.id,
@@ -142,9 +308,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
         }
       });
 
-      // ==========================================
-      // КОМАНДА /app - ССЫЛКА НА MINI APP
-      // ==========================================
       this.bot.command('app', async (ctx) => {
         try {
           const telegramId = ctx.from.id;
@@ -172,27 +335,25 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
         }
       });
 
-      // ==========================================
-      // КОМАНДА /help - ПОМОЩЬ
-      // ==========================================
       this.bot.command('help', async (ctx) => {
-        await ctx.reply(
-          `📚 Доступные команды:\n\n` +
+        const isAdmin = ctx.from.id === this.ADMIN_ID;
+        
+        let helpText = 
+          `📚 **Доступные команды:**\n\n` +
           `/start - Начать работу\n` +
           `/balance - Проверить баланс\n` +
           `/app - Открыть Mini App\n` +
-          `/help - Показать это сообщение`
-        );
-      });
-
-      // ==========================================
-      // ОБРАБОТЧИК ТЕКСТОВЫХ СООБЩЕНИЙ
-      // ==========================================
-      this.bot.on('text', async (ctx) => {
-        // Игнорируем команды (они уже обработаны выше)
-        if (ctx.message.text.startsWith('/')) return;
+          `/help - Показать это сообщение\n`;
         
-        await ctx.reply('Используй команду /help чтобы увидеть список команд');
+        if (isAdmin) {
+          helpText += 
+            `\n👑 **Админ-команды:**\n` +
+            `/admin_stats - Статистика бота\n` +
+            `/admin_users - Список пользователей\n` +
+            `/admin_add <id> <сумма> - Начислить баланс\n`;
+        }
+
+        await ctx.reply(helpText, { parse_mode: 'Markdown' });
       });
 
       // ==========================================
@@ -202,8 +363,9 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
         dropPendingUpdates: true,
       });
       
-      this.logger.log('✅ Бот успешно запущен и слушает команды!');
-      
+      this.logger.log('✅ Бот успешно запущен!');
+      await this.notifyAdmin('🚀 Бот успешно запущен!');
+
     } catch (error) {
       const err = error as Error;
       this.logger.error(`❌ Критическая ошибка запуска бота: ${err.message}`);
@@ -216,6 +378,7 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
   async onModuleDestroy() {
     this.logger.log('🛑 Останавливаем бота...');
     await this.bot.stop();
+    await this.notifyAdmin('🛑 Бот остановлен');
     this.logger.log('✅ Бот остановлен');
   }
 }
