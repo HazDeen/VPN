@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            BigInt        @id @default(autoincrement())
+  telegramId    BigInt        @unique
+  firstName     String?
+  lastName      String?
+  username      String?
+  balance       Float         @default(0)
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  devices       Device[]
+  subscriptions Subscription[]
+  transactions  Transaction[]
+  invoices      PaymentInvoice[]
+
+  @@map("users")
+}
+
+model Device {
+  id            BigInt        @id @default(autoincrement())
+  userId        BigInt
+  name          String
+  customName    String?
+  type          String
+  configLink    String        @unique
+  isActive      Boolean       @default(false)
+  connectedAt   DateTime      @default(now()) @map("connected_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription  Subscription?
+  transactions  Transaction[]
+
+  @@map("devices")
+}
+
+model Subscription {
+  id              BigInt        @id @default(autoincrement())
+  deviceId        BigInt        @unique
+  userId          BigInt
+  price           Float         @default(300)
+  nextBillingDate DateTime      @map("next_billing_date")
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  device          Device        @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model Transaction {
+  id          BigInt        @id @default(autoincrement())
+  userId      BigInt
+  deviceId    BigInt?
+  amount      Float
+  type        String
+  status      String        @default("completed")
+  description String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device      Device?       @relation(fields: [deviceId], references: [id])
+
+  @@map("transactions")
+}
+
+model PaymentInvoice {
+  id              BigInt        @id @default(autoincrement())
+  userId          BigInt
+  amount          Float
+  telegramChargeId String?      @unique
+  status          String        @default("pending")
+  payload         String        @unique
+  createdAt       DateTime      @default(now()) @map("created_at")
+  paidAt          DateTime?     @map("paid_at")
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payment_invoices")
+}
