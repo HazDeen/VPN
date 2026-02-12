@@ -2,27 +2,37 @@ const API_URL = 'https://vpn-production-702c.up.railway.app';
 
 const getInitData = (): string => {
   try {
+    // ✅ Telegram Web App (мобильное приложение)
     // @ts-ignore
     if (window.Telegram?.WebApp?.initData) {
       // @ts-ignore
       return window.Telegram.WebApp.initData;
     }
     
-    // ✅ ПОДДЕРЖКА TELEGRAM WEB
+    // ✅ Telegram Web (web.telegram.org)
     // @ts-ignore
     if (window.Telegram?.WebView?.initParams?.tgWebAppData) {
       // @ts-ignore
       return window.Telegram.WebView.initParams.tgWebAppData;
     }
     
-    // ✅ ДЛЯ ТЕСТА ВНЕ TELEGRAM - РАСКОММЕНТИРУЙ
-    return "query_id=AAH5VE4M...&user=%7B%22id%22%3A1314191617%7D";
+    // ✅ URL параметры (для теста)
+    const urlParams = new URLSearchParams(window.location.search);
+    const tgWebAppData = urlParams.get('tgWebAppData');
+    if (tgWebAppData) {
+      return tgWebAppData;
+    }
     
   } catch (e) {
-    console.warn('Not in Telegram environment');
+    console.warn('Error getting initData:', e);
   }
   
-  console.warn('⚠️ No initData found');
+  console.warn('⚠️ No initData found - using mock for development');
+  // ✅ ДЛЯ ЛОКАЛЬНОЙ РАЗРАБОТКИ
+  if (window.location.hostname === 'localhost') {
+    return "query_id=AAH5VE4M...&user=%7B%22id%22%3A1314191617%7D";
+  }
+  
   return '';
 };
 
