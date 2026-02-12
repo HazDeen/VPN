@@ -266,8 +266,8 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       // 📱 ОТСЛЕЖИВАНИЕ СОБЫТИЙ В MINI APP
       // ==========================================
       
-      // Эндпоинт для логов из Mini App
-      this.bot.telegram.setWebhook(`${process.env.BACKEND_URL}/bot-webhook`);
+      // // Эндпоинт для логов из Mini App
+      // this.bot.telegram.setWebhook(`${process.env.BACKEND_URL}/bot-webhook`);
       
       // ==========================================
       // 👤 ОБЫЧНЫЕ КОМАНДЫ
