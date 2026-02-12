@@ -7,7 +7,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'https://vpn-frontend.pages.dev', // Cloudflare
-      'https://vpn-frontend.netlify.app', // Netlify
+      'https://vpn-front.netlify.app/', // Netlify
       'https://vpn-frontend.vercel.app', // Vercel
       'https://t.me',
       'https://telegram.org',
