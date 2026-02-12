@@ -72,7 +72,15 @@ export const api = {
     getAll: () => apiFetch('/transactions'),
   },
   payments: {
-    createInvoice: (amount: number) => 
-      apiFetch('/payments/create-invoice', { method: 'POST', body: JSON.stringify({ amount }) }),
-  },
+  testPayment: (amount: number) => 
+    apiFetch('/payments/test-payment', { 
+      method: 'POST', 
+      body: JSON.stringify({ amount }) 
+    }),
+  createInvoice: (amount: number) => 
+    apiFetch('/payments/create-invoice', { 
+      method: 'POST', 
+      body: JSON.stringify({ amount }) 
+    }),
+},
 };

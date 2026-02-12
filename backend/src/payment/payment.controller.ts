@@ -1,18 +1,24 @@
-import { Controller, Post, Body, Req, UseGuards, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, Req, UseGuards } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { TelegramGuard } from '../auth/guards/telegram/telegram.guard';
-import { CreateInvoiceDto } from './dto/create-invoice.dto';
+
+class TestPaymentDto {
+  amount: number;
+}
 
 @Controller('payments')
+@UseGuards(TelegramGuard)
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
+  @Post('test-payment')
+  async testPayment(@Req() req, @Body() dto: TestPaymentDto) {
+    return this.paymentService.processTestPayment(req.user.id, dto.amount);
+  }
+
+  // Для обратной совместимости
   @Post('create-invoice')
-  @UseGuards(TelegramGuard)
-  async createInvoice(@Req() req, @Body() dto: CreateInvoiceDto) {
-    // В реальном приложении chatId нужно получить от фронтенда
-    // или из initData
-    const chatId = Number(req.user.telegramId);
-    return this.paymentService.createInvoice(req.user.id, dto.amount, chatId);
+  async createInvoice(@Req() req, @Body() dto: TestPaymentDto) {
+    return this.paymentService.processTestPayment(req.user.id, dto.amount);
   }
 }
