@@ -1,19 +1,19 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bull';
+// import { BullModule } from '@nestjs/bull';
 import { SubscriptionService } from './subscription.service';
 import { SubscriptionController } from './subscription.controller';
-import { BillingProcessor } from './processors/billing.processor';
+// import { BillingProcessor } from './processors/billing.processor';
 
 @Module({
   imports: [
-    BullModule.registerQueue({
-      name: 'billing',
-    }),
+    // BullModule.registerQueue({
+    //   name: 'billing',
+    // }),
   ],
   controllers: [SubscriptionController],
   providers: [
     SubscriptionService, 
-    BillingProcessor
+    // BillingProcessor
   ],
   exports: [SubscriptionService],
 })

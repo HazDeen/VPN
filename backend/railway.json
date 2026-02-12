@@ -1,0 +1,12 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "npm install --legacy-peer-deps && npm run build"
+  },
+  "deploy": {
+    "startCommand": "npm run prisma:migrate && npm run start:prod",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 100,
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
