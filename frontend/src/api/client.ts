@@ -1,38 +1,7 @@
 const API_URL = 'https://vpn-production-702c.up.railway.app';
 
 const getInitData = (): string => {
-  try {
-    // ✅ Telegram Web App (мобильное приложение)
-    // @ts-ignore
-    if (window.Telegram?.WebApp?.initData) {
-      // @ts-ignore
-      return window.Telegram.WebApp.initData;
-    }
-    
-    // ✅ Telegram Web (web.telegram.org)
-    // @ts-ignore
-    if (window.Telegram?.WebView?.initParams?.tgWebAppData) {
-      // @ts-ignore
-      return window.Telegram.WebView.initParams.tgWebAppData;
-    }
-    
-    // ✅ URL параметры (для теста)
-    const urlParams = new URLSearchParams(window.location.search);
-    const tgWebAppData = urlParams.get('tgWebAppData');
-    if (tgWebAppData) {
-      return tgWebAppData;
-    }
-    
-  } catch (e) {
-    console.warn('Error getting initData:', e);
-  }
-  
-  console.warn('⚠️ No initData found - using mock for development');
-  // ✅ ДЛЯ ЛОКАЛЬНОЙ РАЗРАБОТКИ
-  if (window.location.hostname === 'localhost') {
-    return "query_id=AAH5VE4M...&user=%7B%22id%22%3A1314191617%7D";
-  }
-  
+  // ✅ Всегда возвращаем пустую строку - Guard сам даст тестового пользователя
   return '';
 };
 
