@@ -29,23 +29,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
       console.log('🔐 Attempting to login...');
       
-      // Проверяем initData
-      // @ts-ignore
-      console.log('initData exists:', !!window.Telegram?.WebApp?.initData);
+      // 1️⃣ Сначала авторизуемся
+      const authData = await api.auth.telegram();
+      console.log('✅ Auth response:', authData);
       
-      const data = await api.auth.telegram();
-      console.log('✅ Login success:', data);
+      // 2️⃣ ПОЛУЧАЕМ ПОЛНЫЙ ПРОФИЛЬ С БАЛАНСОМ!
+      const profileData = await api.user.getProfile();
+      console.log('👤 Profile response:', profileData);
       
-      setUser(data.user);
+      // 3️⃣ Сохраняем пользователя С БАЛАНСОМ!
+      setUser(profileData);
+      
     } catch (error) {
       console.error('❌ Login failed:', error);
-      
-      // Для теста - показываем хоть что-то
-      // @ts-ignore
-      if (!window.Telegram?.WebApp?.initData) {
-  console.log('⚠️ Not in Telegram environment');
-  // Не создаём тестового пользователя!
-}
     } finally {
       setLoading(false);
     }

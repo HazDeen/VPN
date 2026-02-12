@@ -13,29 +13,35 @@ export const useBalance = () => {
       setLoading(true);
       console.log('💰 Fetching balance...');
       
+      // ✅ Если у пользователя уже есть баланс - используем его!
+      if (user?.balance !== undefined) {
+        console.log('✅ Using balance from user profile:', user.balance);
+        setBalance(user.balance);
+        setDaysLeft(30); // Временное значение
+        setLoading(false);
+        return;
+      }
+      
+      // Иначе запрашиваем с сервера
       const data = await api.user.getBalance();
-      console.log('✅ Balance data:', data);
+      console.log('✅ Balance from API:', data);
       
       setBalance(data.balance);
       setDaysLeft(data.daysLeft);
       updateBalance(data.balance);
+      
     } catch (error) {
       console.error('❌ Failed to fetch balance:', error);
-      
-      // Если не работает API, используем баланс из контекста
-      if (user?.balance) {
-        console.log('⚠️ Using balance from auth context:', user.balance);
-        setBalance(user.balance);
-        setDaysLeft(30);
-      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchBalance();
-  }, [user?.id]); // Перезапрашиваем при смене пользователя
+    if (user) {
+      fetchBalance();
+    }
+  }, [user?.id, user?.balance]);
 
   return { balance, daysLeft, loading, refetch: fetchBalance };
 };
