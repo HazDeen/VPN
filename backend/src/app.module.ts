@@ -7,19 +7,13 @@ import { AuthModule } from './auth/auth.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { PaymentModule } from './payment/payment.module';
+import { BotModule } from './bot/bot.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    // BullModule.forRoot({
-    //   redis: {
-    //     host: process.env.REDIS_HOST || 'localhost',
-    //     port: Number(process.env.REDIS_PORT) || 6379,
-    //     // ✅ Убираем retryAttempts и retryDelay - их нет в RedisOptions!
-    //   },
-    // }),
     PrismaModule,
     UserModule,
     DeviceModule,
@@ -27,6 +21,7 @@ import { PaymentModule } from './payment/payment.module';
     TransactionModule,
     SubscriptionModule,
     PaymentModule,
+    BotModule,
   ],
 })
 export class AppModule {}
