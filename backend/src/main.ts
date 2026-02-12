@@ -11,6 +11,7 @@ async function bootstrap() {
       'https://vpn-frontend.vercel.app', // Vercel
       'https://t.me',
       'https://telegram.org',
+      'https://web.telegram.org', 
     ],
     credentials: true,
   });
