@@ -14,6 +14,14 @@ async function bootstrap() {
   credentials: true,
 });
   
+  app.use('/', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    service: 'vpn-backend',
+    timestamp: new Date().toISOString() 
+  });
+});
+
   await app.listen(process.env.PORT || 3001);
   console.log(`🚀 Backend running on: http://localhost:${process.env.PORT || 3001}`);
 }

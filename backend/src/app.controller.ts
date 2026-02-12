@@ -4,10 +4,10 @@ import { Controller, Get } from '@nestjs/common';
 export class AppController {
   @Get()
   getHealth() {
-    return { 
-      status: 'ok', 
+    return {
+      status: 'ok',
       service: 'vpn-backend',
-      timestamp: new Date().toISOString() 
+      timestamp: new Date().toISOString()
     };
   }
 }
