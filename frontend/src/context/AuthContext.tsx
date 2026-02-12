@@ -7,7 +7,7 @@ interface User {
   firstName: string;
   lastName: string;
   username: string;
-  balance: number;
+  balance: number;  // ✅ БАЛАНС ДОЛЖЕН БЫТЬ!
 }
 
 interface AuthContextType {
@@ -29,15 +29,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
       console.log('🔐 Attempting to login...');
       
-      // 1️⃣ Сначала авторизуемся
+      // @ts-ignore
+      const hasInitData = !!window.Telegram?.WebApp?.initData;
+      console.log('📦 initData exists:', hasInitData);
+      
+      if (!hasInitData) {
+        console.log('⚠️ Not in Telegram environment');
+        setLoading(false);
+        return;
+      }
+      
+      // 1️⃣ АВТОРИЗАЦИЯ
       const authData = await api.auth.telegram();
       console.log('✅ Auth response:', authData);
       
-      // 2️⃣ ПОЛУЧАЕМ ПОЛНЫЙ ПРОФИЛЬ С БАЛАНСОМ!
+      // 2️⃣ ПОЛУЧАЕМ ПРОФИЛЬ С БАЛАНСОМ!
       const profileData = await api.user.getProfile();
       console.log('👤 Profile response:', profileData);
       
-      // 3️⃣ Сохраняем пользователя С БАЛАНСОМ!
+      // 3️⃣ СОХРАНЯЕМ ПОЛЬЗОВАТЕЛЯ С БАЛАНСОМ!
       setUser(profileData);
       
     } catch (error) {
