@@ -1,14 +1,14 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { Telegraf } from 'telegraf';
 import { PrismaService } from '../prisma/prisma.service';
-import { LoggerService } from '../logger/logger.service';
+import { LoggerService, createLogger } from '../logger/logger.service';
 import { botLogger, formatIncoming, formatOutgoing } from './bot.logger';
 
 @Injectable()
 export class BotService implements OnModuleInit, OnModuleDestroy {
   private bot: Telegraf;
   private readonly logger: LoggerService;
-  private readonly ADMIN_ID = 1314191617; // ✅ ТВОЙ ID ИЗ ЛОГОВ!
+  private readonly ADMIN_ID = 1314191617;
 
   constructor(private prisma: PrismaService) {
     const botToken = process.env.BOT_TOKEN;
@@ -16,7 +16,9 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       throw new Error('❌ BOT_TOKEN не настроен в .env');
     }
     this.bot = new Telegraf(botToken);
-    this.logger = botLogger;
+    
+    // ✅ СОЗДАЕМ ЛОГГЕР ЧЕРЕЗ ФАБРИКУ
+    this.logger = createLogger('🤖 BOT');
   }
 
   async onModuleInit() {

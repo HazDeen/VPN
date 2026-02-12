@@ -4,14 +4,21 @@ import * as path from 'path';
 
 @Injectable()
 export class LoggerService implements NestLoggerService {
-  private readonly context: string;
+  private context: string;
   private readonly logsDir = path.join(process.cwd(), 'logs');
   private readonly consoleLogFile = path.join(this.logsDir, 'console.log');
   private readonly errorLogFile = path.join(this.logsDir, 'error.log');
 
-  constructor(context?: string) {
-    this.context = context || 'APP';
+  // ✅ УБИРАЕМ ПАРАМЕТРЫ ИЗ КОНСТРУКТОРА!
+  constructor() {
+    this.context = 'APP';
     this.ensureLogsDirectory();
+  }
+
+  // ✅ МЕТОД ДЛЯ УСТАНОВКИ КОНТЕКСТА
+  setContext(context: string) {
+    this.context = context;
+    return this;
   }
 
   private ensureLogsDirectory() {
@@ -80,7 +87,9 @@ export class LoggerService implements NestLoggerService {
   }
 }
 
-// Фабрика для создания логгера с контекстом
+// ✅ Фабрика для создания логгера с контекстом
 export function createLogger(context: string) {
-  return new LoggerService(context);
+  const logger = new LoggerService();
+  logger.setContext(context);
+  return logger;
 }
