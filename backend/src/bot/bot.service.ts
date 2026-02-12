@@ -133,43 +133,43 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       // ==========================================
       
       // 📊 Статистика
-      this.bot.command('admin_stats', async (ctx) => {
-        if (ctx.from.id !== this.ADMIN_ID) {
-          await ctx.reply('⛔ У тебя нет прав администратора');
-          return;
+this.bot.command('admin_stats', async (ctx) => {
+  if (ctx.from.id !== this.ADMIN_ID) {
+    await ctx.reply('⛔ У тебя нет прав администратора');
+    return;
+  }
+
+  try {
+    const totalUsers = await this.prisma.user.count();
+    const totalDevices = await this.prisma.device.count();
+    const activeDevices = await this.prisma.device.count({ where: { isActive: true } });
+    const totalBalance = await this.prisma.user.aggregate({ _sum: { balance: true } });
+    const todayTransactions = await this.prisma.transaction.count({
+      where: {
+        createdAt: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0))
         }
+      }
+    });
 
-        try {
-          const totalUsers = await this.prisma.user.count();
-          const totalDevices = await this.prisma.device.count();
-          const activeDevices = await this.prisma.device.count({ where: { isActive: true } });
-          const totalBalance = await this.prisma.user.aggregate({ _sum: { balance: true } });
-          const todayTransactions = await this.prisma.transaction.count({
-            where: {
-              createdAt: {
-                gte: new Date(new Date().setHours(0, 0, 0, 0))
-              }
-            }
-          });
+    const stats = `📊 СТАТИСТИКА БОТА\n\n` +
+      `👥 Пользователей: ${totalUsers}\n` +
+      `📱 Устройств всего: ${totalDevices}\n` +
+      `✅ Активных устройств: ${activeDevices}\n` +
+      `💰 Общий баланс: ${totalBalance._sum.balance || 0} ₽\n` +
+      `📈 Транзакций сегодня: ${todayTransactions}`;
 
-          const stats = `📊 **СТАТИСТИКА БОТА**\n\n` +
-            `👥 Пользователей: ${totalUsers}\n` +
-            `📱 Устройств всего: ${totalDevices}\n` +
-            `✅ Активных устройств: ${activeDevices}\n` +
-            `💰 Общий баланс: ${totalBalance._sum.balance || 0} ₽\n` +
-            `📈 Транзакций сегодня: ${todayTransactions}`;
-
-          await ctx.reply(stats, { parse_mode: 'Markdown' });
-          
-          // 📢 УВЕДОМЛЕНИЕ О ЗАПРОСЕ СТАТИСТИКИ
-          await this.notifyAdmin(`📊 Админ запросил статистику`);
-          
-        } catch (error) {
-          const err = error as Error;
-          this.logger.error(`❌ Ошибка /admin_stats: ${err.message}`);
-          await ctx.reply('⚠️ Ошибка при получении статистики');
-        }
-      });
+    // ✅ Убираем parse_mode
+    await ctx.reply(stats);
+    
+    await this.notifyAdmin(`📊 Админ запросил статистику`);
+    
+  } catch (error) {
+    const err = error as Error;
+    this.logger.error(`❌ Ошибка /admin_stats: ${err.message}`);
+    await ctx.reply('⚠️ Ошибка при получении статистики');
+  }
+});
 
       // 💰 Начислить баланс пользователю
       this.bot.command('admin_add', async (ctx) => {
@@ -229,39 +229,39 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       });
 
       // 👥 Список пользователей
-      this.bot.command('admin_users', async (ctx) => {
-        if (ctx.from.id !== this.ADMIN_ID) {
-          await ctx.reply('⛔ У тебя нет прав администратора');
-          return;
-        }
+this.bot.command('admin_users', async (ctx) => {
+  if (ctx.from.id !== this.ADMIN_ID) {
+    await ctx.reply('⛔ У тебя нет прав администратора');
+    return;
+  }
 
-        try {
-          const users = await this.prisma.user.findMany({
-            take: 10,
-            orderBy: { createdAt: 'desc' },
-          });
+  try {
+    const users = await this.prisma.user.findMany({
+      take: 10,
+      orderBy: { createdAt: 'desc' },
+    });
 
-          let message = '👥 **Последние 10 пользователей:**\n\n';
-          users.forEach((user, index) => {
-            message += `${index + 1}. ID: ${user.telegramId}\n`;
-            message += `   Имя: ${user.firstName} ${user.lastName}\n`;
-            message += `   Username: @${user.username || 'нет'}\n`;
-            message += `   Баланс: ${user.balance} ₽\n`;
-            message += `   Дата: ${user.createdAt.toLocaleDateString()}\n\n`;
-          });
+    let message = '👥 **Последние 10 пользователей:**\n\n';
+    users.forEach((user, index) => {
+      message += `${index + 1}. ID: ${user.telegramId}\n`;
+      message += `   Имя: ${user.firstName} ${user.lastName}\n`;
+      message += `   Username: @${user.username || 'нет'}\n`;
+      message += `   Баланс: ${user.balance} ₽\n`;
+      message += `   Дата: ${user.createdAt.toLocaleDateString('ru-RU')}\n\n`;
+    });
 
-          await ctx.reply(message, { parse_mode: 'Markdown' });
-          
-          // 📢 УВЕДОМЛЕНИЕ АДМИНУ
-          await this.notifyAdmin(`👥 Админ запросил список пользователей`);
+    // ✅ Убираем parse_mode - отправляем как обычный текст!
+    await ctx.reply(message);
+    
+    // 📢 УВЕДОМЛЕНИЕ АДМИНУ
+    await this.notifyAdmin(`👥 Админ запросил список пользователей`);
 
-        } catch (error) {
-          const err = error as Error;
-          this.logger.error(`❌ Ошибка /admin_users: ${err.message}`);
-          await ctx.reply('⚠️ Ошибка при получении списка пользователей');
-        }
-      });
-
+  } catch (error) {
+    const err = error as Error;
+    this.logger.error(`❌ Ошибка /admin_users: ${err.message}`);
+    await ctx.reply('⚠️ Ошибка при получении списка пользователей');
+  }
+});
       // ==========================================
       // 📱 ОТСЛЕЖИВАНИЕ СОБЫТИЙ В MINI APP
       // ==========================================
@@ -336,26 +336,26 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       });
 
       this.bot.command('help', async (ctx) => {
-        const isAdmin = ctx.from.id === this.ADMIN_ID;
-        
-        let helpText = 
-          `📚 **Доступные команды:**\n\n` +
-          `/start - Начать работу\n` +
-          `/balance - Проверить баланс\n` +
-          `/app - Открыть Mini App\n` +
-          `/help - Показать это сообщение\n`;
-        
-        if (isAdmin) {
-          helpText += 
-            `\n👑 **Админ-команды:**\n` +
-            `/admin_stats - Статистика бота\n` +
-            `/admin_users - Список пользователей\n` +
-            `/admin_add <id> <сумма> - Начислить баланс\n`;
-        }
+  const isAdmin = ctx.from.id === this.ADMIN_ID;
+  
+  let helpText = 
+    `📚 Доступные команды:\n\n` +
+    `/start - Начать работу\n` +
+    `/balance - Проверить баланс\n` +
+    `/app - Открыть Mini App\n` +
+    `/help - Показать это сообщение\n`;
+  
+  if (isAdmin) {
+    helpText += 
+      `\n👑 Админ-команды:\n` +
+      `/admin_stats - Статистика бота\n` +
+      `/admin_users - Список пользователей\n` +
+      `/admin_add <id> <сумма> - Начислить баланс\n`;
+  }
 
-        await ctx.reply(helpText, { parse_mode: 'Markdown' });
-      });
-
+  // ✅ Убираем parse_mode
+  await ctx.reply(helpText);
+});
       // ==========================================
       // ЗАПУСК БОТА
       // ==========================================
