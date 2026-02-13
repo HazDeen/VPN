@@ -5,49 +5,22 @@ import { PrismaService } from '../prisma/prisma.service';
 export class TransactionService {
   constructor(private prisma: PrismaService) {}
 
-  async getUserTransactions(userId: bigint) {
-    try {
-      const transactions = await this.prisma.transaction.findMany({
-        where: { userId },
-        include: {
-          device: true,
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 50,
-      });
+  async getUserTransactions(userId: number) {
+  const transactions = await this.prisma.transaction.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  });
 
-      // Группируем по датам для фронта
-      const grouped = {};
-      
-      transactions.forEach((tx) => {
-        // 👇 ИСПРАВЛЕННЫЙ ФОРМАТ: "7 ФЕВРАЛЯ", "6 ФЕВРАЛЯ"
-        const date = tx.createdAt.toLocaleDateString('ru-RU', {
-          day: 'numeric',
-          month: 'long',
-        }).toUpperCase();
-        // Убираем "2026 Г." и "12 ФЕВРАЛЯ" → "12 ФЕВРАЛЯ"
-
-        if (!grouped[date]) {
-          grouped[date] = [];
-        }
-
-        grouped[date].push({
-          id: Number(tx.id),
-          time: tx.createdAt.toLocaleTimeString('ru-RU', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-          description: tx.description,
-          amount: tx.amount,
-          type: tx.type,
-          deviceName: tx.device?.customName || tx.device?.name,
-        });
-      });
-
-      return grouped;
-    } catch (error) {
-      console.error('Get transactions error:', error);
-      throw new InternalServerErrorException('Failed to get transactions');
-    }
-  }
+  return transactions.map(t => ({
+    id: t.id,
+    amount: t.amount,
+    type: t.type,
+    description: t.description,
+    createdAt: t.createdAt,
+    // 👇 КОНВЕРТИРУЕМ!
+    userId: Number(t.userId),
+    deviceId: t.deviceId ? Number(t.deviceId) : null,
+  }));
+}
 }

@@ -13,54 +13,57 @@ export class DeviceService {
   }
 
   async getUserDevices(userId: number) {
-    this.logger.log(`📱 Getting devices for user ${userId}`);
-    
-    const devices = await this.prisma.device.findMany({
-      where: { userId },
-      orderBy: { connectedAt: 'desc' },
-    });
+  this.logger.log(`📱 Getting devices for user ${userId}`);
+  
+  const devices = await this.prisma.device.findMany({
+    where: { userId },
+    orderBy: { connectedAt: 'desc' },
+  });
 
-    return devices.map(d => ({
-      id: d.id,
-      name: d.customName || d.name,
-      model: d.name,
-      type: d.type,
-      date: d.connectedAt.toLocaleDateString('ru-RU'),
-      isActive: d.isActive,
-      configLink: d.configLink,
-    }));
+  return devices.map(d => ({
+    id: d.id,                    // number уже
+    name: d.customName || d.name,
+    model: d.name,
+    type: d.type,
+    date: d.connectedAt.toLocaleDateString('ru-RU'),
+    isActive: d.isActive,
+    configLink: d.configLink,    // string
+    // 👇 ЕСЛИ ЕСТЬ BIGINT - КОНВЕРТИРУЙ!
+    userId: Number(d.userId)      // BigInt → number
+  }));
+}
+
+async addDevice(userId: number, dto: any) {
+  this.logger.log(`➕ Adding device for user ${userId}: ${JSON.stringify(dto)}`);
+  
+  const count = await this.prisma.device.count({ 
+    where: { userId } 
+  });
+  
+  if (count >= 5) {
+    throw new BadRequestException('Максимум 5 устройств');
   }
 
-  async addDevice(userId: number, dto: any) {
-    this.logger.log(`➕ Adding device for user ${userId}: ${JSON.stringify(dto)}`);
-    
-    const count = await this.prisma.device.count({ 
-      where: { userId } 
-    });
-    
-    if (count >= 5) {
-      throw new BadRequestException('Максимум 5 устройств');
-    }
+  const device = await this.prisma.device.create({
+    data: {
+      userId,
+      name: dto.name,
+      customName: dto.customName || dto.name,
+      type: dto.type,
+      configLink: this.generateConfigLink(),
+      isActive: false,
+    },
+  });
 
-    const device = await this.prisma.device.create({
-      data: {
-        userId,
-        name: dto.name,
-        customName: dto.customName || dto.name,
-        type: dto.type,
-        configLink: this.generateConfigLink(),
-        isActive: false,
-      },
-    });
-
-    this.logger.log(`✅ Device created with id: ${device.id}`);
-    
-    return {
-      id: device.id,
-      name: device.customName,
-      configLink: device.configLink,
-    };
-  }
+  this.logger.log(`✅ Device created with id: ${device.id}`);
+  
+  // ✅ ВОЗВРАЩАЕМ ТОЛЬКО number И string!
+  return {
+    id: device.id,                    // number
+    name: device.customName,           // string
+    configLink: device.configLink,     // string
+  };
+}
 
   async deleteDevice(deviceId: number, userId: number) {
     this.logger.log(`🗑️ Deleting device ${deviceId} for user ${userId}`);
