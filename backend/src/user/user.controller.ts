@@ -7,11 +7,16 @@ export class UserController {
 
   @Get('balance')
   async getBalance() {
-    return this.userService.getBalance(1); // number!
+    const result = await this.userService.getBalance(1);
+    console.log('🔍 getBalance result:', result);
+    return result;
   }
 
   @Post('topup')
   async topUp(@Body() body: { amount: number }) {
-    return this.userService.topUpBalance(1, body.amount); // number!
+    console.log('💰 topUp request:', body);
+    const result = await this.userService.topUpBalance(1, body.amount);
+    console.log('✅ topUp result:', result);
+    return result;
   }
 }
