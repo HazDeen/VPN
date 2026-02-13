@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard } from 'lucide-react';
 import { useBalance } from '../hooks/useBalance';
+import { api } from '../api/client';
 import { toast } from 'sonner';
 
 const PRESET_AMOUNTS = [100, 300, 500];
@@ -22,19 +23,24 @@ export default function TopUp() {
     }
 
     setLoading(true);
+    console.log('💰 Sending topup request:', amount); // 👈 ЛОГ!
+    
     try {
-      // ✅ ТЕСТОВАЯ ОПЛАТА - ПРОСТО ПОКАЗЫВАЕМ УВЕДОМЛЕНИЕ
-      toast.success(`✅ Баланс пополнен на ${amount} ₽ (тестовый режим)`, {
+      // ✅ ОТПРАВЛЯЕМ ЗАПРОС НА БЭКЕНД!
+      const result = await api.user.topUp(amount);
+      console.log('✅ Topup response:', result); // 👈 ЛОГ!
+      
+      toast.success(`✅ Баланс пополнен на ${amount} ₽`, {
         icon: '💰',
         duration: 3000,
       });
       
-      // Обновляем баланс через рефетч
+      // Обновляем баланс
       await refetchBalance();
       
       setTimeout(() => navigate('/'), 1500);
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('❌ Topup error:', error);
       toast.error('❌ Ошибка пополнения');
     } finally {
       setLoading(false);
@@ -92,8 +98,8 @@ export default function TopUp() {
       </div>
 
       <div className="infoMessage">
-        <p>⚡ Тестовый режим</p>
-        <p className="small">Деньги зачисляются без реальной оплаты</p>
+        <p>⚡ Реальная оплата</p>
+        <p className="small">Деньги зачисляются на баланс</p>
       </div>
 
       <button 
