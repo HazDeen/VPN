@@ -7,6 +7,12 @@ const getInitData = (): string => {
       // @ts-ignore
       return window.Telegram.WebApp.initData;
     }
+    
+    // @ts-ignore
+    if (window.Telegram?.WebView?.initParams?.tgWebAppData) {
+      // @ts-ignore
+      return window.Telegram.WebView.initParams.tgWebAppData;
+    }
   } catch (e) {
     console.warn('Not in Telegram environment');
   }
@@ -54,6 +60,10 @@ export const api = {
   user: {
     getBalance: () => apiFetch('/user/balance'),
     getProfile: () => apiFetch('/user/profile'),
+    topUp: (amount: number) => apiFetch('/user/topup', { 
+      method: 'POST', 
+      body: JSON.stringify({ amount }) 
+    }),
   },
   devices: {
     getAll: () => apiFetch('/devices'),
@@ -63,6 +73,14 @@ export const api = {
     }),
     delete: (id: number) => apiFetch(`/devices/${id}`, { 
       method: 'DELETE' 
+    }),
+    // ✅ ПРАВИЛЬНО ДОБАВЛЕННЫЕ МЕТОДЫ
+    replace: (id: number) => apiFetch(`/devices/${id}/replace`, { 
+      method: 'POST' 
+    }),
+    updateName: (id: number, customName: string) => apiFetch(`/devices/${id}/name`, { 
+      method: 'PUT', 
+      body: JSON.stringify({ customName }) 
     }),
   },
   transactions: {

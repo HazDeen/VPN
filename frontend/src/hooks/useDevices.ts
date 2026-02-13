@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import type { Device, DeviceType } from '../types/device';
+import { toast } from 'sonner';
 
 export const useDevices = () => {
   const [devices, setDevices] = useState<Device[]>([]);
@@ -63,6 +64,38 @@ export const useDevices = () => {
     }
   };
 
+  // ✅ ДОБАВЛЯЕМ МЕТОД ЗАМЕНЫ НАСТРОЕК
+  const replaceDevice = async (deviceId: number) => {
+    try {
+      console.log('🔄 Replacing device:', deviceId);
+      // TODO: добавить реальный API вызов, когда будет готов
+      // await api.devices.replace(deviceId);
+      toast.success('Функция замены настроек временно недоступна');
+    } catch (error) {
+      console.error('❌ Failed to replace device:', error);
+      throw error;
+    }
+  };
+
+  // ✅ ДОБАВЛЯЕМ МЕТОД ОБНОВЛЕНИЯ НАЗВАНИЯ
+  const updateDeviceName = async (deviceId: number, customName: string) => {
+    try {
+      console.log('✏️ Updating device name:', { deviceId, customName });
+      // TODO: добавить реальный API вызов, когда будет готов
+      // await api.devices.updateName(deviceId, customName);
+      
+      // Пока просто обновляем локально
+      setDevices(prev => prev.map(d => 
+        d.id === deviceId ? { ...d, name: customName } : d
+      ));
+      
+      toast.success('Название обновлено');
+    } catch (error) {
+      console.error('❌ Failed to update device name:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchDevices();
   }, []);
@@ -73,5 +106,7 @@ export const useDevices = () => {
     fetchDevices,
     addDevice,
     deleteDevice,
+    replaceDevice,      // ✅ ТЕПЕРЬ ЕСТЬ!
+    updateDeviceName,   // ✅ ТЕПЕРЬ ЕСТЬ!
   };
 };

@@ -5,37 +5,31 @@ import { PrismaService } from '../prisma/prisma.service';
 export class AuthService {
   constructor(private prisma: PrismaService) {}
 
-  async findOrCreateUser(telegramUser: any) {
-    console.log('📥 Telegram user data:', telegramUser);
+  async findOrCreateUser(telegramData: any) {
+    const telegramId = BigInt(telegramData.id);
     
     let user = await this.prisma.user.findUnique({
-      where: { telegramId: BigInt(telegramUser.id) },
+      where: { telegramId },
     });
 
     if (!user) {
-      console.log('🆕 Creating new user...');
-      
       user = await this.prisma.user.create({
         data: {
-          telegramId: BigInt(telegramUser.id),
-          firstName: telegramUser.firstName || '',
-          lastName: telegramUser.lastName || '',
-          username: telegramUser.username || '',
+          telegramId,
+          firstName: telegramData.first_name || '',
+          lastName: telegramData.last_name || '',
+          username: telegramData.username || '',
           balance: 0,
         },
       });
-      
-      console.log('✅ User created:', user.id);
-    } else {
-      console.log('✅ User found:', user.id);
     }
 
     return user;
   }
 
-  async getMe(userId: bigint) {
+  async getMe(userId: number) { // 👈 ЗДЕСЬ ДОЛЖЕН БЫТЬ NUMBER, НЕ BIGINT!
     const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: userId }, // id в БД - Int, передаём number
     });
 
     if (!user) {
@@ -44,7 +38,7 @@ export class AuthService {
 
     return {
       id: user.id,
-      telegramId: user.telegramId,
+      telegramId: Number(user.telegramId),
       firstName: user.firstName,
       lastName: user.lastName,
       username: user.username,

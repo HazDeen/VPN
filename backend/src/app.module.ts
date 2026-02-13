@@ -5,9 +5,6 @@ import { UserModule } from './user/user.module';
 import { DeviceModule } from './device/device.module';
 import { AuthModule } from './auth/auth.module';
 import { TransactionModule } from './transaction/transaction.module';
-import { SubscriptionModule } from './subscription/subscription.module';
-import { PaymentModule } from './payment/payment.module';
-// import { BotModule } from './bot/bot.module';
 import { LoggerModule } from './logger/logger.module';
 
 @Module({
@@ -20,9 +17,6 @@ import { LoggerModule } from './logger/logger.module';
     DeviceModule,
     AuthModule,
     TransactionModule,
-    SubscriptionModule,
-    PaymentModule,
-    // BotModule,
     LoggerModule,
   ],
 })
