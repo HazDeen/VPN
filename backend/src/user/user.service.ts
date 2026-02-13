@@ -8,83 +8,70 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async getBalance(userId: number) {
-    this.logger.log(`💰 Getting balance for user ${userId}`);
-    
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
+  this.logger.log(`💰 Getting balance for user ${userId}`);
+  
+  const user = await this.prisma.user.findUnique({
+    where: { id: userId },
+  });
 
-    if (!user) {
-      this.logger.log(`👤 User ${userId} not found, creating...`);
-      const newUser = await this.prisma.user.create({
-        data: {
-          id: userId,
-          telegramId: BigInt(1314191617),
-          firstName: 'hazdeen',
-          username: 'hazdeen',
-          balance: 1500,
-        },
-      });
-      return {
-        balance: newUser.balance,
-        daysLeft: 30,
-        activeDevices: 0,
-      };
-    }
-
-    return {
-      balance: user.balance,
-      daysLeft: 30,
-      activeDevices: 0,
-    };
+  // ❌ УБИРАЕМ АВТОСОЗДАНИЕ!
+  if (!user) {
+    this.logger.error(`❌ User ${userId} not found!`);
+    throw new NotFoundException(`User with id ${userId} not found`);
   }
 
-  async topUpBalance(userId: number, amount: number) {
-    console.log(`💰 Top up user ${userId} with ${amount}`);
-    
-    // ПРЯМОЙ ЗАПРОС К БАЗЕ
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
+  const activeDevices = await this.prisma.device.count({
+    where: { userId, isActive: true },
+  });
 
-    if (!user) {
-      this.logger.error(`❌ User ${userId} NOT FOUND in database!`);
-      throw new NotFoundException(`User with id ${userId} not found`);
-    }
+  const dailyRate = activeDevices * 10;
+  const daysLeft = dailyRate > 0 ? Math.floor(user.balance / dailyRate) : 30;
 
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        balance: {
-          increment: amount,
-        },
-      },
-    });
+  return {
+    balance: user.balance,
+    daysLeft: daysLeft > 30 ? 30 : daysLeft,
+    activeDevices,
+  };
+}
 
-    await this.prisma.transaction.create({
-      data: {
-        userId,
-        amount,
-        type: 'topup',
-        description: 'Пополнение баланса',
-      },
-    });
+async topUpBalance(userId: number, amount: number) {
+  this.logger.log(`💰 Top up user ${userId} with ${amount}`);
+  
+  // Проверяем, что пользователь существует
+  const user = await this.prisma.user.findUnique({
+    where: { id: userId },
+  });
 
-    console.log(`✅ New balance: ${updatedUser.balance}`);
-    
-    await this.prisma.transaction.create({
-      data: {
-        userId,
-        amount,
-        type: 'topup',
-        description: 'Пополнение баланса',
-      },
-    });
-
-    return {
-      success: true,
-      balance: updatedUser.balance,
-    };
-
+  if (!user) {
+    this.logger.error(`❌ User ${userId} not found!`);
+    throw new NotFoundException(`User with id ${userId} not found`);
   }
+
+  // Обновляем баланс
+  const updatedUser = await this.prisma.user.update({
+    where: { id: userId },
+    data: {
+      balance: {
+        increment: amount,
+      },
+    },
+  });
+
+  this.logger.log(`✅ New balance: ${updatedUser.balance}`);
+
+  // Создаём транзакцию
+  await this.prisma.transaction.create({
+    data: {
+      userId,
+      amount,
+      type: 'topup',
+      description: 'Пополнение баланса',
+    },
+  });
+
+  return {
+    success: true,
+    balance: updatedUser.balance,
+  };
+}
 }
