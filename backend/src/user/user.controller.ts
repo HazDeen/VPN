@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post, Body } from '@nestjs/common';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -14,5 +14,11 @@ export class UserController {
   @Get('profile')
   async getProfile() {
     return this.userService.getProfile(1);
+  }
+
+  @Post('topup')
+  async topUp(@Body() body: { amount: number }) {
+    console.log('💰 TOPUP request:', body); // 👈 ЛОГ
+    return this.userService.topUpBalance(1, body.amount);
   }
 }

@@ -67,8 +67,26 @@ async getProfile(userId: number) {
 }
 
 async topUpBalance(userId: number, amount: number) {
-
   
+  
+  // Проверяем, есть ли пользователь
+  const existingUser = await this.prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!existingUser) {
+    // Если нет - создаём!
+    await this.prisma.user.create({
+      data: {
+        id: userId,
+        telegramId: BigInt(1314191617),
+        firstName: 'hazdeen',
+        balance: 0,
+      },
+    });
+  }
+
+  // Обновляем баланс
   const user = await this.prisma.user.update({
     where: { id: userId },
     data: {
@@ -78,6 +96,7 @@ async topUpBalance(userId: number, amount: number) {
     },
   });
 
+  // Создаём транзакцию
   await this.prisma.transaction.create({
     data: {
       userId,
@@ -88,11 +107,9 @@ async topUpBalance(userId: number, amount: number) {
   });
 
   
-  // 👇 КОНВЕРТИРУЕМ!
   return {
     success: true,
     balance: user.balance,
-    userId: Number(user.id),
   };
 }
 }
