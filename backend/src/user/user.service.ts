@@ -1,95 +1,77 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(private prisma: PrismaService) {}
 
-  async getBalance(userId: number) {
-  const user = await this.prisma.user.findUnique({
-    where: { id: userId },
-  });
-
-  if (!user) {
-    // 👋 ЕСЛИ НЕТ ПОЛЬЗОВАТЕЛЯ - СОЗДАЁМ!
-    const newUser = await this.prisma.user.create({
-      data: {
-        id: userId,
-        telegramId: BigInt(userId),
-        firstName: 'User',
-        balance: 1000,
-      },
+  async getBalance(userId: number) { // 👈 number!
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId }, // number!
     });
-    
+
+    if (!user) {
+      // Автосоздание
+      const newUser = await this.prisma.user.create({
+        data: {
+          id: userId,
+          telegramId: BigInt(1314191617),
+          firstName: 'hazdeen',
+          username: 'hazdeen',
+          balance: 1000,
+        },
+      });
+      return {
+        balance: newUser.balance,
+        daysLeft: 30,
+        activeDevices: 0,
+      };
+    }
+
     return {
-      balance: newUser.balance,
+      balance: user.balance,
       daysLeft: 30,
       activeDevices: 0,
     };
   }
 
-  return {
-    balance: user.balance,
-    daysLeft: 30,
-    activeDevices: 0,
-  };
-}
+  async topUpBalance(userId: number, amount: number) { // 👈 number!
+    this.logger.log(`💰 Top up user ${userId} with ${amount}`);
+    
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId }, // number!
+    });
 
-async getProfile(userId: number) {
-  const user = await this.prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      devices: {
-        where: { isActive: true },
-        orderBy: { connectedAt: 'desc' },
+    if (!user) {
+      this.logger.error(`❌ User ${userId} not found!`);
+      throw new Error('User not found');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId }, // number!
+      data: {
+        balance: {
+          increment: amount,
+        },
       },
-    },
-  });
+    });
 
-  // 👇 КОНВЕРТИРУЕМ ВСЁ!
-  return {
-    id: user.id,
-    telegramId: Number(user.telegramId), // BigInt → number!
-    firstName: user.firstName,
-    lastName: user.lastName,
-    username: user.username,
-    balance: user.balance,
-    devices: user.devices.map(d => ({
-      id: d.id,
-      name: d.customName || d.name,
-      model: d.name,
-      type: d.type,
-      date: d.connectedAt,
-      isActive: d.isActive,
-      configLink: d.configLink,
-    })),
-  };
-}
+    await this.prisma.transaction.create({
+      data: {
+        userId, // number!
+        amount,
+        type: 'topup',
+        description: 'Пополнение баланса',
+      },
+    });
 
-async topUpBalance(userId: number, amount: number) { // 👈 userId ДОЛЖЕН БЫТЬ NUMBER!
-  
-  // Ищем пользователя по number id
-  const user = await this.prisma.user.findUnique({
-    where: { id: userId }, // id в БД - Int, передаём number
-  });
-
-  if (!user) {
-    throw new Error('User not found');
+    this.logger.log(`✅ New balance: ${updatedUser.balance}`);
+    
+    return {
+      success: true,
+      balance: updatedUser.balance,
+    };
   }
-
-  // Обновляем
-  const updatedUser = await this.prisma.user.update({
-    where: { id: userId },
-    data: {
-      balance: {
-        increment: amount,
-      },
-    },
-  });
-
-  return {
-    success: true,
-    balance: updatedUser.balance,
-  };
-}
 }

@@ -7,18 +7,11 @@ export class UserController {
 
   @Get('balance')
   async getBalance() {
-    // ✅ Передаём number, а в сервисе конвертируем
-    return this.userService.getBalance(1);
-  }
-
-  @Get('profile')
-  async getProfile() {
-    return this.userService.getProfile(1);
+    return this.userService.getBalance(1); // number!
   }
 
   @Post('topup')
   async topUp(@Body() body: { amount: number }) {
-    console.log('💰 TOPUP request:', body); // 👈 ЛОГ
-    return this.userService.topUpBalance(1, body.amount);
+    return this.userService.topUpBalance(1, body.amount); // number!
   }
 }
