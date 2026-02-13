@@ -5,24 +5,15 @@ import { PrismaService } from '../prisma/prisma.service';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async getBalance(userId: bigint) {
+  async getBalance(userId: number) { // 👈 Принимаем number
     const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: userId }, // Prisma сам сконвертирует number в Int
     });
 
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    // Считаем активные устройства
     const activeDevices = await this.prisma.device.count({
-      where: {
-        userId,
-        isActive: true,
-      },
+      where: { userId, isActive: true },
     });
 
-    // 300₽/мес = 10₽/день
     const dailyRate = activeDevices * 10;
     const daysLeft = dailyRate > 0 ? Math.floor(user.balance / dailyRate) : 30;
 
@@ -33,50 +24,33 @@ export class UserService {
     };
   }
 
-  async getProfile(userId: bigint) {
+  async getProfile(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
         devices: {
           where: { isActive: true },
-          take: 5,
           orderBy: { connectedAt: 'desc' },
         },
       },
     });
 
-    if (!user) {
-      throw new Error('User not found');
-    }
-
     return {
       id: user.id,
-      telegramId: user.telegramId,
+      telegramId: Number(user.telegramId), // 👈 BigInt → Number
       firstName: user.firstName,
       lastName: user.lastName,
       username: user.username,
       balance: user.balance,
-      devices: user.devices.map(device => ({
-        id: device.id,
-        name: device.customName || device.name,
-        model: device.name,
-        type: device.type,
-        date: device.connectedAt,
-        isActive: device.isActive,
+      devices: user.devices.map(d => ({
+        id: d.id,
+        name: d.customName || d.name,
+        model: d.name,
+        type: d.type,
+        date: d.connectedAt,
+        isActive: d.isActive,
+        configLink: d.configLink,
       })),
     };
-  }
-
-  async updateBalance(userId: bigint, amount: number) {
-    const user = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        balance: {
-          increment: amount,
-        },
-      },
-    });
-
-    return { balance: user.balance };
   }
 }
