@@ -40,7 +40,7 @@ export class UserService {
   }
 
   async topUpBalance(userId: number, amount: number) {
-    this.logger.log(`💰 Top up user ${userId} with ${amount}`);
+    console.log(`💰 Top up user ${userId} with ${amount}`);
     
     // ПРЯМОЙ ЗАПРОС К БАЗЕ
     const user = await this.prisma.user.findUnique({
@@ -70,11 +70,21 @@ export class UserService {
       },
     });
 
-    this.logger.log(`✅ New balance: ${updatedUser.balance}`);
+    console.log(`✅ New balance: ${updatedUser.balance}`);
     
+    await this.prisma.transaction.create({
+      data: {
+        userId,
+        amount,
+        type: 'topup',
+        description: 'Пополнение баланса',
+      },
+    });
+
     return {
       success: true,
       balance: updatedUser.balance,
     };
+
   }
 }
