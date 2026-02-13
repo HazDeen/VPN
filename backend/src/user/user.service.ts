@@ -10,13 +10,28 @@ export class UserService {
     where: { id: userId },
   });
 
-  // 👇 КОНВЕРТИРУЕМ ВСЕ BIGINT!
+  if (!user) {
+    // 👋 ЕСЛИ НЕТ ПОЛЬЗОВАТЕЛЯ - СОЗДАЁМ!
+    const newUser = await this.prisma.user.create({
+      data: {
+        id: userId,
+        telegramId: BigInt(userId),
+        firstName: 'User',
+        balance: 1000,
+      },
+    });
+    
+    return {
+      balance: newUser.balance,
+      daysLeft: 30,
+      activeDevices: 0,
+    };
+  }
+
   return {
     balance: user.balance,
     daysLeft: 30,
     activeDevices: 0,
-    userId: Number(user.id),
-    telegramId: Number(user.telegramId), // BigInt → number!
   };
 }
 

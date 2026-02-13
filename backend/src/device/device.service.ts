@@ -20,16 +20,17 @@ export class DeviceService {
     orderBy: { connectedAt: 'desc' },
   });
 
+  // ✅ ПРИНУДИТЕЛЬНО КОНВЕРТИРУЕМ ВСЁ
   return devices.map(d => ({
-    id: d.id,                    // number уже
+    id: d.id,
     name: d.customName || d.name,
     model: d.name,
     type: d.type,
     date: d.connectedAt.toLocaleDateString('ru-RU'),
     isActive: d.isActive,
-    configLink: d.configLink,    // string
-    // 👇 ЕСЛИ ЕСТЬ BIGINT - КОНВЕРТИРУЙ!
-    userId: Number(d.userId)      // BigInt → number
+    configLink: d.configLink,
+    // 👇 ЯВНО КОНВЕРТИРУЕМ
+    userId: Number(d.userId)
   }));
 }
 

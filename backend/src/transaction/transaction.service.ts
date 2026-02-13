@@ -7,43 +7,41 @@ export class TransactionService {
 
   constructor(private prisma: PrismaService) {}
 
-  async getUserTransactions(userId: number) { // 👈 number, не bigint!
-    this.logger.log(`📜 Getting transactions for user ${userId}`);
-    
-    const transactions = await this.prisma.transaction.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
+  async getUserTransactions(userId: number) {
+  this.logger.log(`📜 Getting transactions for user ${userId}`);
+  
+  const transactions = await this.prisma.transaction.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  });
+
+  const grouped = {};
+  
+  transactions.forEach((t) => {
+    const date = t.createdAt.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+    }).toUpperCase();
+
+    if (!grouped[date]) {
+      grouped[date] = [];
+    }
+
+    grouped[date].push({
+      id: t.id,
+      time: t.createdAt.toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      description: t.description,
+      amount: t.amount,
+      type: t.type,
+      // 👇 КОНВЕРТИРУЕМ, ЕСЛИ ЕСТЬ
+      userId: t.userId ? Number(t.userId) : undefined,
     });
+  });
 
-    this.logger.log(`✅ Found ${transactions.length} transactions`);
-
-    // Группируем по датам для фронта
-    const grouped = {};
-    
-    transactions.forEach((t) => {
-      const date = t.createdAt.toLocaleDateString('ru-RU', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }).toUpperCase();
-
-      if (!grouped[date]) {
-        grouped[date] = [];
-      }
-
-      grouped[date].push({
-        id: t.id,
-        time: t.createdAt.toLocaleTimeString('ru-RU', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        description: t.description,
-        amount: t.amount,
-        type: t.type,
-      });
-    });
-
-    return grouped;
-  }
+  return grouped;
+}
 }
