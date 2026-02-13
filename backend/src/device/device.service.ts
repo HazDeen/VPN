@@ -1,16 +1,20 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { randomBytes } from 'crypto';
 
 @Injectable()
 export class DeviceService {
+  private readonly logger = new Logger(DeviceService.name);
+
   constructor(private prisma: PrismaService) {}
 
   private generateConfigLink(): string {
-    return `vless://${randomBytes(16).toString('base64url')}`;
+    return `https://hvpn.io/${randomBytes(16).toString('base64url')}`;
   }
 
-  async getUserDevices(userId: number) { // 👈 number
+  async getUserDevices(userId: number) {
+    this.logger.log(`📱 Getting devices for user ${userId}`);
+    
     const devices = await this.prisma.device.findMany({
       where: { userId },
       orderBy: { connectedAt: 'desc' },
@@ -27,9 +31,16 @@ export class DeviceService {
     }));
   }
 
-  async addDevice(userId: number, dto: any) { // 👈 number
-    const count = await this.prisma.device.count({ where: { userId } });
-    if (count >= 5) throw new BadRequestException('Максимум 5 устройств');
+  async addDevice(userId: number, dto: any) {
+    this.logger.log(`➕ Adding device for user ${userId}: ${JSON.stringify(dto)}`);
+    
+    const count = await this.prisma.device.count({ 
+      where: { userId } 
+    });
+    
+    if (count >= 5) {
+      throw new BadRequestException('Максимум 5 устройств');
+    }
 
     const device = await this.prisma.device.create({
       data: {
@@ -42,6 +53,8 @@ export class DeviceService {
       },
     });
 
+    this.logger.log(`✅ Device created with id: ${device.id}`);
+    
     return {
       id: device.id,
       name: device.customName,
@@ -49,10 +62,13 @@ export class DeviceService {
     };
   }
 
-  async deleteDevice(deviceId: number, userId: number) { // 👈 number
+  async deleteDevice(deviceId: number, userId: number) {
+    this.logger.log(`🗑️ Deleting device ${deviceId} for user ${userId}`);
+    
     await this.prisma.device.deleteMany({
       where: { id: deviceId, userId },
     });
+    
     return { success: true };
   }
 }

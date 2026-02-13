@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard } from 'lucide-react';
 import { useBalance } from '../hooks/useBalance';
-import { api } from '../api/client';
 import { toast } from 'sonner';
 
 const PRESET_AMOUNTS = [100, 300, 500];
@@ -24,16 +23,15 @@ export default function TopUp() {
 
     setLoading(true);
     try {
-      // ✅ ТЕСТОВАЯ ОПЛАТА - МГНОВЕННОЕ ЗАЧИСЛЕНИЕ!
-      await api.payments.testPayment(amount);
-      
-      await refetchBalance();
-      toast.success(`✅ Баланс пополнен на ${amount} ₽`, {
+      // ✅ ТЕСТОВАЯ ОПЛАТА - ПРОСТО ПОКАЗЫВАЕМ УВЕДОМЛЕНИЕ
+      toast.success(`✅ Баланс пополнен на ${amount} ₽ (тестовый режим)`, {
         icon: '💰',
         duration: 3000,
       });
       
-      // Закрываем окно через 1.5 секунды
+      // Обновляем баланс через рефетч
+      await refetchBalance();
+      
       setTimeout(() => navigate('/'), 1500);
     } catch (error) {
       console.error('Payment error:', error);
@@ -94,8 +92,8 @@ export default function TopUp() {
       </div>
 
       <div className="infoMessage">
-        <p>⚡ Режим тестовой оплаты</p>
-        <p className="small">Деньги зачисляются мгновенно без реальной оплаты</p>
+        <p>⚡ Тестовый режим</p>
+        <p className="small">Деньги зачисляются без реальной оплаты</p>
       </div>
 
       <button 

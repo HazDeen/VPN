@@ -52,38 +52,13 @@ export const useDevices = () => {
     }
   };
 
-  const replaceDevice = async (deviceId: number) => {
-    try {
-      console.log('🔄 Replacing device:', deviceId);
-      const response = await api.devices.replace(deviceId);
-      await fetchDevices();
-      return response;
-    } catch (error) {
-      console.error('❌ Failed to replace device:', error);
-      throw error;
-    }
-  };
-
   const deleteDevice = async (deviceId: number) => {
     try {
       console.log('🗑️ Deleting device:', deviceId);
-      const response = await api.devices.delete(deviceId);
+      await api.devices.delete(deviceId);
       await fetchDevices();
-      return response;
     } catch (error) {
       console.error('❌ Failed to delete device:', error);
-      throw error;
-    }
-  };
-
-  const updateDeviceName = async (deviceId: number, customName: string) => {
-    try {
-      console.log('✏️ Updating device name:', { deviceId, customName });
-      const response = await api.devices.updateName(deviceId, customName);
-      await fetchDevices();
-      return response;
-    } catch (error) {
-      console.error('❌ Failed to update device name:', error);
       throw error;
     }
   };
@@ -97,8 +72,6 @@ export const useDevices = () => {
     loading,
     fetchDevices,
     addDevice,
-    replaceDevice,
     deleteDevice,
-    updateDeviceName
   };
 };

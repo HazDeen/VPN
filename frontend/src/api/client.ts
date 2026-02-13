@@ -1,7 +1,16 @@
 const API_URL = 'https://vpn-production-702c.up.railway.app';
 
 const getInitData = (): string => {
-  // ✅ Всегда возвращаем пустую строку - Guard сам даст тестового пользователя
+  try {
+    // @ts-ignore
+    if (window.Telegram?.WebApp?.initData) {
+      // @ts-ignore
+      return window.Telegram.WebApp.initData;
+    }
+  } catch (e) {
+    console.warn('Not in Telegram environment');
+  }
+  
   return '';
 };
 
@@ -10,7 +19,7 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `tma ${initData}`,
+    ...(initData && { 'Authorization': `tma ${initData}` }),
     ...options.headers,
   };
 
@@ -37,7 +46,6 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   }
 }
 
-// ✅ ЭКСПОРТИРУЕМ api!
 export const api = {
   auth: {
     telegram: () => apiFetch('/auth/telegram', { method: 'POST' }),
@@ -49,29 +57,15 @@ export const api = {
   },
   devices: {
     getAll: () => apiFetch('/devices'),
-    add: (data: any) => apiFetch('/devices', { method: 'POST', body: JSON.stringify(data) }),
-    replace: (id: number) => apiFetch(`/devices/${id}/replace`, { method: 'POST' }),
-    updateName: (id: number, customName: string) => 
-      apiFetch(`/devices/${id}/name`, { method: 'PUT', body: JSON.stringify({ customName }) }),
-    delete: (id: number) => apiFetch(`/devices/${id}`, { method: 'DELETE' }),
-  },
-  subscriptions: {
-    activate: (deviceId: number) => apiFetch(`/subscriptions/activate/${deviceId}`, { method: 'POST' }),
-    deactivate: (deviceId: number) => apiFetch(`/subscriptions/deactivate/${deviceId}`, { method: 'POST' }),
+    add: (data: any) => apiFetch('/devices', { 
+      method: 'POST', 
+      body: JSON.stringify(data) 
+    }),
+    delete: (id: number) => apiFetch(`/devices/${id}`, { 
+      method: 'DELETE' 
+    }),
   },
   transactions: {
     getAll: () => apiFetch('/transactions'),
-  },
-  payments: {
-    testPayment: (amount: number) => 
-      apiFetch('/payments/test-payment', { 
-        method: 'POST', 
-        body: JSON.stringify({ amount }) 
-      }),
-    createInvoice: (amount: number) => 
-      apiFetch('/payments/create-invoice', { 
-        method: 'POST', 
-        body: JSON.stringify({ amount }) 
-      }),
   },
 };
