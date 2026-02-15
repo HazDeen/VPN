@@ -9,8 +9,8 @@ type Props = {
   type: DeviceType;
   date: string;
   isActive: boolean;
+  daysLeft?: number;
   configLink: string;
-  daysLeft: number;
 };
 
 const getDeviceIcon = (type: DeviceType) => {
@@ -29,7 +29,7 @@ const getDeviceIcon = (type: DeviceType) => {
   }
 };
 
-export default function DeviceCard({ id, name, model, type, date, isActive }: Props) {
+export default function DeviceCard({ id, name, model, type, date, isActive, daysLeft = 0 }: Props) {
   const navigate = useNavigate();
   const Icon = getDeviceIcon(type);
 
@@ -45,12 +45,21 @@ export default function DeviceCard({ id, name, model, type, date, isActive }: Pr
       <div className="deviceInfo">
         <div className="deviceNameRow">
           <div className="deviceNameWrapper">
-            {isActive ? (<span className="activeDot" />) : (<span className="inactiveDot" />)}
             <span className="deviceName">{name}</span>
             <span className="deviceOriginalName">{model}</span>
           </div>
+          {isActive ? (
+            <span className="activeDot" title="Активно" />
+          ) : (
+            <span className="inactiveDot" title="Не активно" />
+          )}
         </div>
-        <span className="deviceDate">{date}</span>
+        <div className="deviceMeta">
+          <span className="deviceDate">{date}</span>
+          {isActive && daysLeft > 0 && (
+            <span className="deviceDaysLeft">⏳ {daysLeft} дн.</span>
+          )}
+        </div>
       </div>
       
       <ChevronRight size={20} className="deviceChevron" />
