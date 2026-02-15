@@ -19,21 +19,16 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
     try {
       this.logger.log('🚀 Бот запускается...');
 
-      // 1. Проверяем токен
       const botInfo = await this.bot.telegram.getMe();
       this.logger.log(`✅ Бот авторизован: @${botInfo.username}`);
 
-      // 2. Принудительно сбрасываем вебхук и все ожидающие обновления
       await this.bot.telegram.deleteWebhook({ drop_pending_updates: true });
       this.logger.log('🔄 Webhook сброшен');
 
-      // 3. Проверяем информацию о вебхуке
       const webhookInfo = await this.bot.telegram.getWebhookInfo();
       this.logger.log(`📞 Webhook info: ${JSON.stringify(webhookInfo)}`);
 
-      // ==========================================
-      // КОМАНДА /start - СОЗДАЁТ ПОЛЬЗОВАТЕЛЯ!
-      // ==========================================
+      // КОМАНДА /start
       this.bot.command('start', async (ctx) => {
         try {
           const telegramId = ctx.from.id;
@@ -43,7 +38,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
 
           this.logger.log(`📥 /start от @${username} (${telegramId})`);
 
-          // СОЗДАЁМ ИЛИ ОБНОВЛЯЕМ ПОЛЬЗОВАТЕЛЯ В БД
           const user = await this.prisma.user.upsert({
             where: { telegramId: BigInt(telegramId) },
             update: {
@@ -56,13 +50,12 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
               firstName,
               lastName,
               username,
-              balance: 0, // Стартовый баланс 0
+              balance: 0,
             },
           });
 
           this.logger.log(`✅ Пользователь ${user.id} создан/обновлён, баланс: ${user.balance}`);
 
-          // Отправляем приветствие
           await ctx.reply(
             `🎉 Добро пожаловать, ${firstName}!\n\n` +
             `💰 Твой баланс: ${user.balance} ₽\n` +
@@ -87,9 +80,7 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
         }
       });
 
-      // ==========================================
-      // КОМАНДА /balance - ПРОВЕРКА БАЛАНСА
-      // ==========================================
+      // КОМАНДА /balance
       this.bot.command('balance', async (ctx) => {
         try {
           const telegramId = ctx.from.id;
@@ -124,9 +115,7 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
         }
       });
 
-      // ==========================================
-      // КОМАНДА /help - СПРАВКА
-      // ==========================================
+      // КОМАНДА /help
       this.bot.command('help', async (ctx) => {
         await ctx.reply(
           `📚 Доступные команды:\n\n` +
@@ -136,17 +125,12 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
         );
       });
 
-      // ==========================================
-      // ОБРАБОТЧИК ТЕКСТОВЫХ СООБЩЕНИЙ
-      // ==========================================
+      // Обработчик текстовых сообщений
       this.bot.on('text', async (ctx) => {
         if (ctx.message.text.startsWith('/')) return;
         await ctx.reply('Используй /help для списка команд');
       });
 
-      // ==========================================
-      // ЗАПУСК БОТА
-      // ==========================================
       await this.bot.launch({
         dropPendingUpdates: true,
       });
@@ -159,9 +143,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  // ==========================================
-  // ОСТАНОВКА БОТА
-  // ==========================================
   async onModuleDestroy() {
     this.logger.log('🛑 Останавливаем бота...');
     await this.bot.stop();

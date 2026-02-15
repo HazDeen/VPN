@@ -27,5 +27,14 @@ async function bootstrap() {
   
   console.log(`✅ Server running on port ${port}`);
   console.log(`🔥 CORS полностью открыт для всех доменов!`);
+
+  const signals = ['SIGTERM', 'SIGINT'];
+  for (const signal of signals) {
+    process.on(signal, async () => {
+      console.log(`\n🛑 Получен сигнал ${signal}, закрываем приложение...`);
+      await app.close();
+      process.exit(0);
+    });
+  }
 }
 bootstrap();
