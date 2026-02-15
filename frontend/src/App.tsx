@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import AuthProvider from "./context/AuthContext"; // 👈 ИМПОРТ ПО УМОЛЧАНИЮ
 import Home from "./pages/Home";
 import TopUp from "./pages/TopUp";
@@ -13,7 +13,6 @@ function App() {
     
     <AuthProvider>
       <ThemeProvider> 
-      <BrowserRouter>
       <Toaster 
       position="bottom-center"
           toastOptions={{
@@ -35,7 +34,6 @@ function App() {
           <Route path="/history" element={<History />} />
           <Route path="/device/:id" element={<DeviceDetail />} />
         </Routes>
-      </BrowserRouter>
       </ThemeProvider>
     </AuthProvider>
   );
