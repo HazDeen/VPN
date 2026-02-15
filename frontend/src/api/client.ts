@@ -2,23 +2,38 @@ const API_URL = 'https://vpn-production-702c.up.railway.app';
 
 const getInitData = (): string => {
   try {
+    // ✅ Telegram Web App (мобильное приложение)
     // @ts-ignore
     if (window.Telegram?.WebApp?.initData) {
+      console.log('✅ Using Telegram.WebApp.initData');
       // @ts-ignore
       return window.Telegram.WebApp.initData;
     }
     
+    // ✅ Telegram Web (web.telegram.org)
     // @ts-ignore
     if (window.Telegram?.WebView?.initParams?.tgWebAppData) {
+      console.log('✅ Using Telegram.WebView.initParams.tgWebAppData');
       // @ts-ignore
       return window.Telegram.WebView.initParams.tgWebAppData;
     }
+    
+    // ✅ URL параметры (для теста)
+    const urlParams = new URLSearchParams(window.location.search);
+    const tgWebAppData = urlParams.get('tgWebAppData');
+    if (tgWebAppData) {
+      console.log('✅ Using URL tgWebAppData');
+      return tgWebAppData;
+    }
+    
   } catch (e) {
-    console.warn('Not in Telegram environment');
+    console.warn('Error getting initData:', e);
   }
   
+  console.warn('⚠️ No initData found');
   return '';
 };
+  
 
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const initData = getInitData();
@@ -52,6 +67,7 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   }
 }
 
+// ✅ ЭКСПОРТИРУЕМ api!
 export const api = {
   auth: {
     telegram: () => apiFetch('/auth/telegram', { method: 'POST' }),
@@ -74,7 +90,6 @@ export const api = {
     delete: (id: number) => apiFetch(`/devices/${id}`, { 
       method: 'DELETE' 
     }),
-    // ✅ ПРАВИЛЬНО ДОБАВЛЕННЫЕ МЕТОДЫ
     replace: (id: number) => apiFetch(`/devices/${id}/replace`, { 
       method: 'POST' 
     }),
