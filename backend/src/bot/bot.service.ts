@@ -6,7 +6,6 @@ import { PrismaService } from '../prisma/prisma.service';
 export class BotService implements OnModuleInit, OnModuleDestroy {
   private bot: Telegraf;
   private readonly logger = new Logger(BotService.name);
-  private isShuttingDown = false;
 
   constructor(private prisma: PrismaService) {
     const botToken = process.env.BOT_TOKEN;
@@ -17,22 +16,28 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    // Запускаем бота без ожидания
-    this.startBot();
+    // Запускаем без ожидания
+    this.startBot().catch(err => {
+      this.logger.error(`❌ Ошибка запуска бота: ${err.message}`);
+    });
   }
 
   private async startBot() {
     try {
       this.logger.log('🚀 Бот запускается...');
 
+      // 1. Проверяем токен
       const botInfo = await this.bot.telegram.getMe();
       this.logger.log(`✅ Бот авторизован: @${botInfo.username}`);
 
+      // 2. Принудительно сбрасываем вебхук
       await this.bot.telegram.deleteWebhook({ drop_pending_updates: true });
       this.logger.log('🔄 Webhook сброшен');
 
+      // 3. Регистрируем команды
       this.registerCommands();
 
+      // 4. ЗАПУСКАЕМ БОТА В РЕЖИМЕ POLLING
       await this.bot.launch({
         dropPendingUpdates: true,
       });
@@ -42,10 +47,12 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       const err = error as Error;
       this.logger.error(`❌ Ошибка запуска бота: ${err.message}`);
+      throw error;
     }
   }
 
   private registerCommands() {
+    // КОМАНДА /start
     this.bot.command('start', async (ctx) => {
       try {
         const telegramId = ctx.from.id;
@@ -97,6 +104,7 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       }
     });
 
+    // КОМАНДА /balance
     this.bot.command('balance', async (ctx) => {
       try {
         const telegramId = ctx.from.id;
@@ -131,6 +139,7 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       }
     });
 
+    // КОМАНДА /help
     this.bot.command('help', async (ctx) => {
       await ctx.reply(
         `📚 Доступные команды:\n\n` +
@@ -140,6 +149,7 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       );
     });
 
+    // Обработчик текстовых сообщений
     this.bot.on('text', async (ctx) => {
       if (ctx.message.text.startsWith('/')) return;
       await ctx.reply('Используй /help для списка команд');
@@ -147,9 +157,7 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    this.isShuttingDown = true;
     this.logger.log('🛑 Останавливаем бота...');
-    
     try {
       await this.bot.stop();
       this.logger.log('✅ Бот остановлен');
