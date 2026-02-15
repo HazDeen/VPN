@@ -21,6 +21,7 @@ CREATE TABLE "devices" (
     "type" TEXT NOT NULL,
     "configLink" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT false,
+    "expiresAt" TIMESTAMP(3),
     "connected_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 

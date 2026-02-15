@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { Smartphone, Laptop, Monitor, Cpu } from "lucide-react";
 import type { DeviceType } from '../types/device';
+import { toast } from 'sonner';
 
 type Props = {
   onClose: () => void;
@@ -28,11 +29,16 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
     setTimeout(() => onClose(), 200);
   };
 
-  const handleSubmit = () => {
-    if (!name.trim()) return;
-    onAdd(name, selectedType, customName || name);
-    handleClose();
-  };
+  const handleSubmit = async () => {
+  if (!name.trim()) return;
+  
+  try {
+    await onAdd(name, selectedType, customName || name);
+    onClose();
+  } catch (error: any) {
+    toast.error(error.message || 'Не удалось добавить устройство');
+  }
+};
 
   return (
     <motion.div 
