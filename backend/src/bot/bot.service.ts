@@ -17,41 +17,35 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
+    // Запускаем бота без ожидания
+    this.startBot();
+  }
+
+  private async startBot() {
     try {
       this.logger.log('🚀 Бот запускается...');
 
-      // Проверяем токен
       const botInfo = await this.bot.telegram.getMe();
       this.logger.log(`✅ Бот авторизован: @${botInfo.username}`);
 
-      // Сбрасываем вебхук
       await this.bot.telegram.deleteWebhook({ drop_pending_updates: true });
       this.logger.log('🔄 Webhook сброшен');
 
-      // Регистрируем команды
       this.registerCommands();
 
-      // ✅ ЗАПУСКАЕМ БОТА В ФОНЕ (НЕ БЛОКИРУЕМ ОСНОВНОЙ ПОТОК)
-      setImmediate(async () => {
-        try {
-          await this.bot.launch({
-            dropPendingUpdates: true,
-          });
-          this.logger.log('✅ Бот успешно запущен и слушает команды!');
-        } catch (error) {
-          const err = error as Error;
-          this.logger.error(`❌ Ошибка запуска бота: ${err.message}`);
-        }
+      await this.bot.launch({
+        dropPendingUpdates: true,
       });
+      
+      this.logger.log('✅ Бот успешно запущен и слушает команды!');
       
     } catch (error) {
       const err = error as Error;
-      this.logger.error(`❌ Критическая ошибка: ${err.message}`);
+      this.logger.error(`❌ Ошибка запуска бота: ${err.message}`);
     }
   }
 
   private registerCommands() {
-    // КОМАНДА /start
     this.bot.command('start', async (ctx) => {
       try {
         const telegramId = ctx.from.id;
@@ -103,7 +97,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       }
     });
 
-    // КОМАНДА /balance
     this.bot.command('balance', async (ctx) => {
       try {
         const telegramId = ctx.from.id;
@@ -138,7 +131,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       }
     });
 
-    // КОМАНДА /help
     this.bot.command('help', async (ctx) => {
       await ctx.reply(
         `📚 Доступные команды:\n\n` +
@@ -148,7 +140,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       );
     });
 
-    // Обработчик текстовых сообщений
     this.bot.on('text', async (ctx) => {
       if (ctx.message.text.startsWith('/')) return;
       await ctx.reply('Используй /help для списка команд');

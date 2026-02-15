@@ -9,14 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
   app.enableCors({
-    origin: [
-    'https://hazdeen.github.io',
-    'https://vpn-frontend-5kn.pages.dev',  // Cloudflare
-    'https://vpn-frontend.netlify.app',
-    'https://web.telegram.org',
-    'https://telegram.org',
-    'http://localhost:5173'
-  ],
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['*'],
@@ -27,15 +20,11 @@ async function bootstrap() {
   
   console.log(`✅ Server running on port ${port}`);
   console.log(`🔥 CORS полностью открыт для всех доменов!`);
+  console.log(`🤖 Бот запускается в фоновом режиме...`);
 
-  // Обработка сигналов завершения
-  const gracefulShutdown = async (signal: string) => {
-    console.log(`\n🛑 Получен сигнал ${signal}, закрываем приложение...`);
-    await app.close();
-    process.exit(0);
-  };
-
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  // Не ждём завершения бота
+  process.nextTick(() => {
+    console.log('✅ Приложение полностью готово к работе');
+  });
 }
 bootstrap();
