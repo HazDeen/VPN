@@ -5,15 +5,15 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('telegram-id')
-  async loginWithTelegramId(@Body() body: { telegramId: number }) {
-    console.log(`📥 Login attempt with telegramId: ${body.telegramId}`);
+  @Post('login-by-username')
+  async loginByUsername(@Body() body: { username: string }) {
+    console.log(`📥 Login attempt with username: ${body.username}`);
     
-    if (!body.telegramId) {
-      throw new UnauthorizedException('Telegram ID required');
+    if (!body.username) {
+      throw new UnauthorizedException('Username required');
     }
     
-    const user = await this.authService.findByTelegramId(body.telegramId);
+    const user = await this.authService.findByUsername(body.username);
     
     return {
       success: true,

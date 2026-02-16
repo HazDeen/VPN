@@ -6,16 +6,21 @@ import * as crypto from 'crypto';
 export class AuthService {
   constructor(private prisma: PrismaService) {}
 
-  async findByTelegramId(telegramId: number) {
-    console.log(`🔍 Searching for user with telegramId: ${telegramId}`);
+  async findByUsername(username: string) {
+    console.log(`🔍 Searching for user with username: @${username}`);
     
-    const user = await this.prisma.user.findUnique({
-      where: { telegramId: BigInt(telegramId) },
+    const user = await this.prisma.user.findFirst({
+      where: { 
+        username: {
+          equals: username,
+          mode: 'insensitive', // игнорируем регистр
+        },
+      },
     });
 
     if (!user) {
       console.log('❌ User not found');
-      throw new UnauthorizedException('User not found. Please send /start to bot first.');
+      throw new UnauthorizedException('Пользователь не найден. Напишите /start боту');
     }
 
     console.log(`✅ User found: ${user.id}`);
