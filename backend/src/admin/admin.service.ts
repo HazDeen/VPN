@@ -1,26 +1,44 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AdminService {
   constructor(private prisma: PrismaService) {}
 
-  async getAllUsers() {
-  const users = await this.prisma.user.findMany({
-    orderBy: { createdAt: 'desc' },
-  });
+  async validateAdmin(username: string) {
+    const admin = await this.prisma.user.findFirst({
+      where: { 
+        username: {
+          equals: username,
+          mode: 'insensitive',
+        },
+        isAdmin: true,
+      },
+    });
 
-  return users.map(user => ({
-    id: user.id,
-    telegramId: Number(user.telegramId),
-    firstName: user.firstName,
-    lastName: user.lastName,
-    username: user.username,
-    balance: user.balance,
-    isAdmin: user.isAdmin,
-    createdAt: user.createdAt,
-  }));
-}
+    if (!admin) {
+      throw new UnauthorizedException('Admin access required');
+    }
+
+    return admin;
+  }
+
+  async getAllUsers() {
+    const users = await this.prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return users.map(user => ({
+      id: user.id,
+      telegramId: Number(user.telegramId),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      balance: user.balance,
+      isAdmin: user.isAdmin,
+      createdAt: user.createdAt,
+    }));
+  }
 
   async getUserDevices(userId: number) {
     const devices = await this.prisma.device.findMany({

@@ -24,13 +24,19 @@ export class UserService {
     return user;
   }
 
-  async getBalanceByUsername(username: string) {
-    this.logger.log(`💰 Getting balance for @${username}`);
+  async getBalance(userId: number) {
+    this.logger.log(`💰 Getting balance for user ${userId}`);
     
-    const user = await this.findUserByUsername(username);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
     const activeDevices = await this.prisma.device.count({
-      where: { userId: user.id, isActive: true },
+      where: { userId, isActive: true },
     });
 
     const dailyRate = activeDevices * 10;
@@ -43,16 +49,16 @@ export class UserService {
     };
   }
 
-  async getProfileByUsername(username: string) {
-    this.logger.log(`👤 Getting profile for @${username}`);
+  async getBalanceByUsername(username: string) {
+    const user = await this.findUserByUsername(username);
+    return this.getBalance(user.id);
+  }
+
+  async getProfile(userId: number) {
+    this.logger.log(`👤 Getting profile for user ${userId}`);
     
-    const user = await this.prisma.user.findFirst({
-      where: { 
-        username: {
-          equals: username,
-          mode: 'insensitive',
-        },
-      },
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
       include: {
         devices: {
           orderBy: { connectedAt: 'desc' },
@@ -61,7 +67,7 @@ export class UserService {
     });
 
     if (!user) {
-      throw new NotFoundException(`User @${username} not found`);
+      throw new NotFoundException('User not found');
     }
 
     return {
@@ -85,13 +91,24 @@ export class UserService {
     };
   }
 
-  async topUpBalanceByUsername(username: string, amount: number) {
-    this.logger.log(`💰 Top up @${username} with ${amount}`);
-    
+  async getProfileByUsername(username: string) {
     const user = await this.findUserByUsername(username);
+    return this.getProfile(user.id);
+  }
+
+  async topUpBalance(userId: number, amount: number) {
+    this.logger.log(`💰 Top up user ${userId} with ${amount}`);
+    
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
     const updatedUser = await this.prisma.user.update({
-      where: { id: user.id },
+      where: { id: userId },
       data: {
         balance: {
           increment: amount,
@@ -101,7 +118,7 @@ export class UserService {
 
     await this.prisma.transaction.create({
       data: {
-        userId: user.id,
+        userId,
         amount,
         type: 'topup',
         description: 'Пополнение баланса',
@@ -114,5 +131,10 @@ export class UserService {
       success: true,
       balance: updatedUser.balance,
     };
+  }
+
+  async topUpBalanceByUsername(username: string, amount: number) {
+    const user = await this.findUserByUsername(username);
+    return this.topUpBalance(user.id, amount);
   }
 }

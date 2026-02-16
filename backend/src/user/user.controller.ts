@@ -23,7 +23,6 @@ export class UserController {
     @Body() body: { amount: number }
   ) {
     if (!username) throw new UnauthorizedException('Username required');
-    console.log(`💰 Topup for @${username}:`, body.amount);
     return this.userService.topUpBalanceByUsername(username, body.amount);
   }
 }
