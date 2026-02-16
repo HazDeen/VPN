@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { api } from '../api/client';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../api/client';
 
 interface User {
   id: number;
@@ -14,9 +14,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: () => Promise<void>;
-  logout: () => void;
   updateBalance: (newBalance: number) => void;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,45 +25,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const checkAuth = async () => {
+  const loadUser = async () => {
+    const token = localStorage.getItem('authToken');
+    
+    if (!token) {
+      navigate('/login');
+      setLoading(false);
+      return;
+    }
+
     try {
-      setLoading(true);
-      
-      // Пробуем получить профиль
+      console.log('🔍 Loading user profile...');
       const profile = await api.user.getProfile();
+      console.log('✅ Profile loaded:', profile);
       setUser(profile);
-      navigate('/');
     } catch (error) {
-      console.log('Not authenticated, redirecting to login');
+      console.error('❌ Failed to load user:', error);
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
       navigate('/login');
     } finally {
       setLoading(false);
     }
-  };
-
-  const login = async () => {
-    try {
-      setLoading(true);
-      
-      const authData = await api.auth.telegram();
-      console.log('✅ Auth response:', authData);
-      
-      const profileData = await api.user.getProfile();
-      console.log('✅ Profile response:', profileData);
-      
-      setUser(profileData);
-      navigate('/');
-    } catch (error) {
-      console.error('❌ Login failed:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = () => {
-    setUser(null);
-    navigate('/login');
   };
 
   const updateBalance = (newBalance: number) => {
@@ -73,12 +55,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const logout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
   useEffect(() => {
-    checkAuth();
+    loadUser();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, updateBalance }}>
+    <AuthContext.Provider value={{ user, loading, updateBalance, logout }}>
       {children}
     </AuthContext.Provider>
   );

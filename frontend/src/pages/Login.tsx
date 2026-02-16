@@ -17,18 +17,15 @@ export default function Login() {
       return;
     }
 
-    // Сохраняем токен в localStorage
+    console.log('🔑 Получен токен:', token);
     localStorage.setItem('authToken', token);
-    
-    // Авторизуемся
     handleLogin(token);
   }, []);
 
   const handleLogin = async (token: string) => {
     try {
-      console.log('🔑 Logging in with token:', token);
+      console.log('🔑 Отправка токена на бэкенд...');
       
-      // Отправляем токен на бэкенд
       const response = await fetch(`https://vpn-production-702c.up.railway.app/auth/token?token=${token}`);
       const data = await response.json();
       
@@ -36,16 +33,16 @@ export default function Login() {
         throw new Error(data.message || 'Login failed');
       }
 
-      console.log('✅ Login success:', data);
+      console.log('✅ Успешный вход:', data);
       
-      // Сохраняем пользователя в контексте
       localStorage.setItem('user', JSON.stringify(data.user));
+      toast.success(`✅ Добро пожаловать, ${data.user.firstName || 'пользователь'}!`);
       
-      toast.success('✅ Успешный вход!');
+      // Перенаправляем на главную
       navigate('/');
       
     } catch (error) {
-      console.error('❌ Login error:', error);
+      console.error('❌ Ошибка входа:', error);
       setError('Ошибка входа. Попробуйте снова.');
       toast.error('❌ Ошибка входа');
     } finally {
@@ -77,7 +74,7 @@ export default function Login() {
                 className="retryButton"
                 onClick={() => window.location.href = 'https://t.me/banana_vpnihe_bot'}
               >
-                🔄 Открыть бота
+                🔄 Получить новую ссылку
               </button>
             </div>
           </div>

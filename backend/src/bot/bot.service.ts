@@ -82,64 +82,65 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
     // ==========================================
     // КОМАНДА /start - СОЗДАЁТ ПОЛЬЗОВАТЕЛЯ И ТОКЕН
     // ==========================================
-    this.bot.command('start', async (ctx) => {
-      try {
-        const telegramId = ctx.from.id;
-        const firstName = ctx.from.first_name || '';
-        const lastName = ctx.from.last_name || '';
-        const username = ctx.from.username || '';
+    // КОМАНДА /start - СОЗДАЁТ ПОЛЬЗОВАТЕЛЯ И ТОКЕН
+this.bot.command('start', async (ctx) => {
+  try {
+    const telegramId = ctx.from.id;
+    const firstName = ctx.from.first_name || '';
+    const lastName = ctx.from.last_name || '';
+    const username = ctx.from.username || '';
 
-        this.logger.log(`📥 /start от @${username} (${telegramId})`);
+    this.logger.log(`📥 /start от @${username} (${telegramId})`);
 
-        // Генерируем уникальный токен
-        const authToken = this.generateAuthToken();
+    // Генерируем уникальный токен
+    const authToken = this.generateAuthToken();
 
-        // СОЗДАЁМ ИЛИ ОБНОВЛЯЕМ ПОЛЬЗОВАТЕЛЯ
-        const user = await this.prisma.user.upsert({
-          where: { telegramId: BigInt(telegramId) },
-          update: {
-            firstName,
-            lastName,
-            username,
-            authToken,
-          },
-          create: {
-            telegramId: BigInt(telegramId),
-            firstName,
-            lastName,
-            username,
-            authToken,
-            balance: 0,
-          },
-        });
-
-        this.logger.log(`✅ Пользователь ${user.id} создан/обновлён`);
-
-        // ССЫЛКА С ТОКЕНОМ
-        const loginUrl = `https://hazdeen.github.io/VPN/login?token=${authToken}`;
-
-        await ctx.reply(
-          `🎉 Добро пожаловать, ${firstName}!\n\n` +
-          `💰 Твой баланс: ${user.balance} ₽\n` +
-          `🔑 Твоя персональная ссылка для входа:\n${loginUrl}\n\n` +
-          `🚀 Перейди по ней, чтобы открыть Mini App`,
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [{ 
-                  text: '🔑 Войти в аккаунт', 
-                  url: loginUrl 
-                }]
-              ]
-            }
-          }
-        );
-      } catch (error) {
-        const err = error as Error;
-        this.logger.error(`❌ Ошибка /start: ${err.message}`);
-        await ctx.reply('⚠️ Произошла ошибка. Попробуй позже.');
-      }
+    // СОЗДАЁМ ИЛИ ОБНОВЛЯЕМ ПОЛЬЗОВАТЕЛЯ
+    const user = await this.prisma.user.upsert({
+      where: { telegramId: BigInt(telegramId) },
+      update: {
+        firstName,
+        lastName,
+        username,
+        authToken,
+      },
+      create: {
+        telegramId: BigInt(telegramId),
+        firstName,
+        lastName,
+        username,
+        authToken,
+        balance: 0,
+      },
     });
+
+    this.logger.log(`✅ Пользователь ${user.id} создан/обновлён`);
+
+    // 👇 ИСПРАВЛЕННАЯ ССЫЛКА С #/
+    const loginUrl = `https://hazdeen.github.io/VPN/#/login?token=${authToken}`;
+
+    await ctx.reply(
+      `🎉 Добро пожаловать, ${firstName}!\n\n` +
+      `💰 Твой баланс: ${user.balance} ₽\n` +
+      `🔑 Твоя персональная ссылка для входа:\n${loginUrl}\n\n` +
+      `🚀 Перейди по ней, чтобы открыть Mini App`,
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ 
+              text: '🔑 Войти в аккаунт', 
+              url: loginUrl 
+            }]
+          ]
+        }
+      }
+    );
+  } catch (error) {
+    const err = error as Error;
+    this.logger.error(`❌ Ошибка /start: ${err.message}`);
+    await ctx.reply('⚠️ Произошла ошибка. Попробуй позже.');
+  }
+});
 
     // ==========================================
     // КОМАНДА /balance - ПРОВЕРКА БАЛАНСА

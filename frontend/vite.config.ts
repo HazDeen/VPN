@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/VPN/', // 👈 ВАЖНО! Имя твоего репозитория
+  base: '/VPN/',  // Это всё ещё нужно для путей к файлам
 })

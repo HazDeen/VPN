@@ -1281,58 +1281,14 @@ body {
   box-shadow: var(--shadow);
 }
 
-.loginDescription {
-  font-size: 16px;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: 32px;
-}
-
-.warningBox {
-  background: var(--warning-alpha);
-  border: 1px solid var(--warning);
+.errorBox {
+  background: var(--danger-alpha);
+  border: 1px solid var(--danger);
   border-radius: 16px;
   padding: 20px;
-  color: var(--warning);
+  color: var(--danger);
   font-size: 14px;
   line-height: 1.6;
-}
-
-.warningBox p:first-child {
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.telegramLoginButton {
-  width: 100%;
-  padding: 18px;
-  border-radius: 30px;
-  border: none;
-  background: var(--accent);
-  color: white;
-  font-size: 17px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.telegramLoginButton:active {
-  transform: scale(0.98);
-  opacity: 0.9;
-}
-
-.telegramLoginButton:disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.telegramLoginButton svg {
-  width: 20px;
-  height: 20px;
 }
 
 .retryButton {

@@ -1,21 +1,21 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";  // Убрали BrowserRouter
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import { Toaster } from 'sonner';
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import TopUp from "./pages/TopUp";
 import History from "./pages/History";
 import DeviceDetail from "./pages/DeviceDetail";
 import "./styles/app.css";
-import { Toaster } from 'sonner';
-import { ThemeProvider } from "./context/ThemeContext";
 
 function App() {
   return (
-    
-    <AuthProvider>
-      <ThemeProvider> 
-      <Toaster 
-      position="bottom-center"
+    <ThemeProvider>
+      <AuthProvider>
+        {/* HashRouter уже оборачивает в main.tsx */}
+        <Toaster 
+          position="bottom-center"
           toastOptions={{
             style: {
               background: '#1a1c22',
@@ -36,8 +36,8 @@ function App() {
           <Route path="/history" element={<History />} />
           <Route path="/device/:id" element={<DeviceDetail />} />
         </Routes>
-      </ThemeProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
