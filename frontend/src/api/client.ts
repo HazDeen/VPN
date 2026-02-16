@@ -1,10 +1,19 @@
 const API_URL = 'https://vpn-production-702c.up.railway.app';
 
 const getUsername = (): string => {
-  const user = localStorage.getItem('user');
-  if (user) {
-    const parsed = JSON.parse(user);
-    return parsed.username || '';
+  // Пробуем до 5 раз с интервалом 100мс
+  for (let i = 0; i < 5; i++) {
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const parsed = JSON.parse(user);
+        if (parsed.username) {
+          return parsed.username;
+        }
+      } catch (e) {}
+    }
+    // Ждём 100мс перед следующей попыткой
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
   }
   return '';
 };
