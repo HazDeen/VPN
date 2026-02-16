@@ -1,8 +1,40 @@
 const API_URL = 'https://vpn-production-702c.up.railway.app';
 
+const getUsername = (): string => {
+  // Пробуем до 3 раз с интервалом
+  for (let i = 0; i < 3; i++) {
+    const user = localStorage.getItem('user');
+    console.log(`🔍 getUsername attempt ${i + 1}:`, user);
+    
+    if (user) {
+      try {
+        const parsed = JSON.parse(user);
+        if (parsed.username) {
+          console.log('✅ Username found:', parsed.username);
+          return parsed.username;
+        }
+      } catch (e) {
+        console.error('❌ Failed to parse user:', e);
+      }
+    }
+    // Ждём 100ms перед следующей попыткой
+    if (i < 2) {
+      const start = Date.now();
+      while (Date.now() - start < 100) {}
+    }
+  }
+  console.log('❌ No username after 3 attempts');
+  return '';
+};
+
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
+  const username = getUsername();
+  
+  console.log(`📡 Fetching ${endpoint} with username:`, username);
+  
   const headers = {
     'Content-Type': 'application/json',
+    'X-Username': username,
     ...options.headers,
   };
 
