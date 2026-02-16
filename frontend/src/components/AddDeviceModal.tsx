@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Smartphone, Laptop, Monitor, Cpu } from "lucide-react";
-import type { DeviceType } from '../types/device';
 import { toast } from 'sonner';
+import type { DeviceType } from '../types/device';
 
 type Props = {
   onClose: () => void;
-  onAdd: (name: string, type: DeviceType, customName: string) => void;
+  onAdd: (name: string, type: DeviceType, customName: string) => Promise<void>;
 };
 
 const DEVICE_TYPES: { id: DeviceType; label: string; icon: any }[] = [
@@ -22,6 +22,7 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
   const [customName, setCustomName] = useState("");
   const [selectedType, setSelectedType] = useState<DeviceType>("iPhone");
   const [isClosing, setIsClosing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleClose = () => {
     if (isClosing) return;
@@ -30,15 +31,28 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
   };
 
   const handleSubmit = async () => {
-  if (!name.trim()) return;
-  
-  try {
-    await onAdd(name, selectedType, customName || name);
-    onClose();
-  } catch (error: any) {
-    toast.error(error.message || 'Не удалось добавить устройство');
-  }
-};
+    if (!name.trim()) {
+      toast.error('Введите название устройства');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await onAdd(name, selectedType, customName || name);
+      toast.success('✅ Устройство добавлено!');
+      
+      // 👉 ПЕРЕЗАГРУЗКА ЧЕРЕЗ 1 СЕКУНДУ
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
+      handleClose();
+    } catch (error: any) {
+      toast.error(error.message || '❌ Не удалось добавить устройство');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <motion.div 
@@ -68,10 +82,10 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
 
         <div className="modalDescription">
           <p className="modalPrice">
-            Стоимость 300 ₽/мес за каждое дополнительное устройство.
+            Стоимость 300 ₽/мес за каждое устройство
           </p>
           <p className="modalNote">
-            Вы сможете удалить это устройство через 24 часа.
+            Средства спишутся сразу, подписка на 30 дней
           </p>
         </div>
 
@@ -81,7 +95,7 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
           </label>
           <input
             className="modalInput"
-            placeholder="Например: Моя мобилка"
+            placeholder="Например: Мой iPhone"
             value={customName}
             onChange={(e) => setCustomName(e.target.value)}
             autoFocus
@@ -125,8 +139,9 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
             onClick={handleSubmit}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            disabled={loading}
           >
-            + Добавить за 300 ₽
+            {loading ? '⏳ Добавление...' : '+ Добавить за 300 ₽'}
           </motion.button>
           
           <motion.button
@@ -134,6 +149,7 @@ export default function AddDeviceModal({ onClose, onAdd }: Props) {
             onClick={handleClose}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            disabled={loading}
           >
             × Отмена
           </motion.button>

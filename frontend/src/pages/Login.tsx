@@ -29,8 +29,13 @@ export default function Login() {
       
       toast.success(`✅ Добро пожаловать, ${response.user.firstName || username}!`);
       
-      // 👉 ЖЁСТКАЯ ПЕРЕЗАГРУЗКА БЕЗ ЗАДЕРЖКИ
-      window.location.href = '/VPN/#/';
+      // 👉 ЖДЁМ 3 СЕКУНДЫ перед перезагрузкой
+      console.log('⏳ Ожидание 3 секунды перед перезагрузкой...');
+      
+      setTimeout(() => {
+        console.log('🔄 Перезагрузка...');
+        window.location.href = '/VPN/';
+      }, 3000);
       
     } catch (error: any) {
       console.error('❌ Ошибка входа:', error);
@@ -42,9 +47,9 @@ export default function Login() {
       } else {
         toast.error(error.message || 'Ошибка входа');
       }
-    } finally {
-      setLoading(false);
+      setLoading(false); // Сбрасываем loading только при ошибке
     }
+    // При успехе loading не сбрасываем - пусть кнопка остаётся неактивной
   };
 
   return (
@@ -90,6 +95,12 @@ export default function Login() {
               {loading ? 'Вход...' : 'Войти'}
             </button>
           </form>
+          
+          {loading && (
+            <div className="loadingMessage">
+              <p>⏳ Успешный вход! Перенаправление через 3 секунды...</p>
+            </div>
+          )}
           
           <div className="loginFooter">
             <p>Нет пароля? Напишите боту:</p>

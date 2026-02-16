@@ -25,35 +25,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
-    console.log('📦 AuthProvider - localStorage:', savedUser);
-    
     if (savedUser) {
       try {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
-        console.log('✅ User set:', parsedUser.username);
+        setUser(JSON.parse(savedUser));
       } catch (e) {
-        console.error('❌ Failed to parse user');
         localStorage.removeItem('user');
       }
     }
     setLoading(false);
+    setInitialLoad(false); // 👈 Первая загрузка завершена
   }, []);
 
   useEffect(() => {
-    if (!loading) {
-      const isLoginPage = location.pathname.includes('/login');
-      console.log('📍 Path:', location.pathname, 'User:', user?.username);
-      
-      if (!user && !isLoginPage) {
-        console.log('🚫 Redirecting to login');
-        navigate('/login');
-      }
+    // Не делаем редирект, пока идёт первая загрузка
+    if (initialLoad) return;
+
+    const isLoginPage = location.pathname.includes('/login');
+    if (!user && !isLoginPage) {
+      navigate('/login');
     }
-  }, [user, loading, navigate, location]);
+  }, [user, loading, initialLoad, navigate, location]);
 
   const updateBalance = (newBalance: number) => {
     if (user) {
