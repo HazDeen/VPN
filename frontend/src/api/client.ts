@@ -1,40 +1,12 @@
 const API_URL = 'https://vpn-production-702c.up.railway.app';
 
-const getInitData = (): string => {
-  try {
-    // @ts-ignore
-    if (window.Telegram?.WebApp?.initData) {
-      console.log('✅ Using Telegram.WebApp.initData');
-      // @ts-ignore
-      return window.Telegram.WebApp.initData;
-    }
-    
-    // @ts-ignore
-    if (window.Telegram?.WebView?.initParams?.tgWebAppData) {
-      console.log('✅ Using Telegram.WebView.initParams.tgWebAppData');
-      // @ts-ignore
-      console.log('📦 WebView object:', window.Telegram.WebView);
-      // @ts-ignore
-      return window.Telegram.WebView.initParams.tgWebAppData;
-    }
-    
-    console.warn('⚠️ No initData found, window.Telegram:', window.Telegram);
-  } catch (e) {
-    console.error('❌ Error getting initData:', e);
-  }
-  
-  return '';
-};
-
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  const initData = getInitData();
-  
-  console.log(`📡 Fetching: ${API_URL}${endpoint}`);
-  console.log(`🔑 Auth header present: ${!!initData}`);
+  // Берём токен из localStorage
+  const token = localStorage.getItem('authToken');
   
   const headers = {
     'Content-Type': 'application/json',
-    ...(initData && { 'Authorization': `tma ${initData}` }),
+    ...(token && { 'Authorization': `Bearer ${token}` }),
     ...options.headers,
   };
 
@@ -45,15 +17,25 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     });
 
     const data = await response.json();
-    console.log(`📥 Response status: ${response.status}`);
 
     if (!response.ok) {
-      throw { status: response.status, message: data.message || 'API Error' };
+      // Если 401 - токен недействителен, удаляем его
+      if (response.status === 401) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+      
+      throw {
+        status: response.status,
+        message: data.message || 'API Error',
+        error: data.error
+      };
     }
 
     return data;
   } catch (error) {
-    console.error(`❌ API Error (${endpoint}):`, error);
+    console.error(`API Error (${endpoint}):`, error);
     throw error;
   }
 }

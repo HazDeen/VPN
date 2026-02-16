@@ -1,132 +1,90 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
-import { api } from '../api/client';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [hasTelegram, setHasTelegram] = useState(false);
-  const [checking, setChecking] = useState(true);
+  const [searchParams] = useSearchParams();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    let attempts = 0;
-    const maxAttempts = 20; // Пробуем 20 раз с интервалом 200ms
-    const interval = setInterval(() => {
-      attempts++;
-      
-      // @ts-ignore
-      const tg = window.Telegram?.WebApp || window.Telegram?.WebView;
-      
-      if (tg) {
-        console.log('✅ Telegram found after', attempts, 'attempts');
-        setHasTelegram(true);
-        setChecking(false);
-        clearInterval(interval);
-        // Пробуем сразу авторизоваться
-        handleTelegramLogin();
-      } else if (attempts >= maxAttempts) {
-        console.log('❌ Telegram not found after', maxAttempts, 'attempts');
-        setChecking(false);
-        clearInterval(interval);
-      }
-    }, 200);
+    const token = searchParams.get('token');
+    
+    if (!token) {
+      setError('Отсутствует токен авторизации');
+      setLoading(false);
+      return;
+    }
 
-    return () => clearInterval(interval);
+    // Сохраняем токен в localStorage
+    localStorage.setItem('authToken', token);
+    
+    // Авторизуемся
+    handleLogin(token);
   }, []);
 
-  const getInitData = (): string => {
-    // @ts-ignore
-    if (window.Telegram?.WebApp?.initData) {
-      // @ts-ignore
-      return window.Telegram.WebApp.initData;
-    }
-    
-    // @ts-ignore
-    if (window.Telegram?.WebView?.initParams?.tgWebAppData) {
-      // @ts-ignore
-      return window.Telegram.WebView.initParams.tgWebAppData;
-    }
-    
-    return '';
-  };
-
-  const handleTelegramLogin = async () => {
-    setLoading(true);
+  const handleLogin = async (token: string) => {
     try {
-      const initData = getInitData();
+      console.log('🔑 Logging in with token:', token);
       
-      if (!initData) {
-        toast.error('❌ Не удалось получить данные Telegram');
-        console.error('No initData found');
-        return;
+      // Отправляем токен на бэкенд
+      const response = await fetch(`https://vpn-production-702c.up.railway.app/auth/token?token=${token}`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
       }
 
-      console.log('📦 initData:', initData);
+      console.log('✅ Login success:', data);
       
-      const authRes = await api.auth.telegram();
-      console.log('✅ Auth response:', authRes);
-      
-      const profileRes = await api.user.getProfile();
-      console.log('✅ Profile:', profileRes);
+      // Сохраняем пользователя в контексте
+      localStorage.setItem('user', JSON.stringify(data.user));
       
       toast.success('✅ Успешный вход!');
       navigate('/');
       
     } catch (error) {
       console.error('❌ Login error:', error);
+      setError('Ошибка входа. Попробуйте снова.');
       toast.error('❌ Ошибка входа');
     } finally {
       setLoading(false);
     }
   };
 
-  if (checking) {
+  if (loading) {
     return (
       <div className="loginPage">
         <div className="loginContainer">
           <div className="loginCard">
-            <p>Проверка подключения к Telegram...</p>
+            <p>Вход в аккаунт...</p>
           </div>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="loginPage">
-      <div className="loginContainer">
-        <h1 className="loginTitle">VPN Mini App</h1>
-        
-        <div className="loginCard">
-          <p className="loginDescription">
-            Войдите через Telegram, чтобы управлять своими устройствами и подписками
-          </p>
-          
-          {!hasTelegram ? (
-            <div className="warningBox">
-              <p>⚠️ Это приложение должно работать внутри Telegram</p>
-              <p>Откройте бота @banana_vpnihe_bot и нажмите Launch</p>
+  if (error) {
+    return (
+      <div className="loginPage">
+        <div className="loginContainer">
+          <h1 className="loginTitle">VPN Mini App</h1>
+          <div className="loginCard">
+            <div className="errorBox">
+              <p>❌ {error}</p>
               <button 
                 className="retryButton"
-                onClick={() => window.location.reload()}
+                onClick={() => window.location.href = 'https://t.me/banana_vpnihe_bot'}
               >
-                🔄 Попробовать снова
+                🔄 Открыть бота
               </button>
             </div>
-          ) : (
-            <button 
-              className="telegramLoginButton"
-              onClick={handleTelegramLogin}
-              disabled={loading}
-            >
-              <LogIn size={20} />
-              {loading ? 'Вход...' : 'Войти через Telegram'}
-            </button>
-          )}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }
