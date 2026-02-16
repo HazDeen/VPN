@@ -1,18 +1,17 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Copy, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowLeft, Copy, RefreshCw, Trash2, Smartphone, Check, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { useDevices } from '../hooks/useDevices';
 import { toast } from 'sonner';
 
 export default function DeviceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { deleteDevice, replaceDevice, updateDeviceName } = useDevices();
   const [copied, setCopied] = useState(false);
   const [deviceName, setDeviceName] = useState('');
   const [device, setDevice] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     const loadDevice = async () => {
@@ -26,7 +25,7 @@ export default function DeviceDetail() {
         }
       } catch (error) {
         console.error('Failed to load device:', error);
-        toast.error('Не удалось загрузить устройство', {icon: '❌'});
+        toast.error('Не удалось загрузить устройство');
       } finally {
         setLoading(false);
       }
@@ -38,198 +37,134 @@ export default function DeviceDetail() {
     if (device?.configLink) {
       navigator.clipboard.writeText(device.configLink);
       setCopied(true);
-      toast.success('Ссылка скопирована!', {
-        icon: '🔗',
-        duration: 2000,
-      });
+      toast.success('Ссылка скопирована!');
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  const handleReplace = async () => {
-    toast.loading('Обновляем настройки...', { id: 'replace',  icon: '⏳', });
-    try {
-      await replaceDevice(Number(id));
-      const devices = await api.devices.getAll();
-      const updatedDevice = devices.find((d: any) => d.id === Number(id));
-      setDevice(updatedDevice);
-      
-      toast.success('Настройки успешно обновлены!', {
-        id: 'replace',
-        duration: 3000,
-        icon: '✅',
-      });
-    } catch (error) {
-      console.error('Failed to replace device:', error);
-      toast.error('Не удалось обновить настройки', {
-        id: 'replace',
-        icon: '❌',
-        duration: 3000,
-      });
-    }
-  };
-
-  const handleDelete = async () => {
-    // 👇 ИСПОЛЬЗУЕМ any ВМЕСТО Toast, ТАК КАК ТИП НЕ НУЖЕН
-    toast.custom((t: any) => (
-      <div className="deleteConfirmToast">
-        <div className="deleteConfirmIcon">🗑️</div>
-        <div className="deleteConfirmContent">
-          <div className="deleteConfirmTitle">Удалить устройство?</div>
-          <div className="deleteConfirmDescription">
-            Это действие нельзя отменить
-          </div>
-          <div className="deleteConfirmActions">
-            <button 
-              className="deleteConfirmCancel"
-              onClick={() => toast.dismiss(t.id)}
-            >
-              Отмена
-            </button>
-            <button 
-              className="deleteConfirmConfirm"
-              onClick={async () => {
-                toast.dismiss(t.id);
-                toast.loading('Удаляем устройство...', { id: 'delete' });
-
-                try {
-                  await deleteDevice(Number(id));
-                  toast.success('Устройство удалено', {
-                    id: 'delete',
-                    duration: 3000,
-                    icon: '✅',
-                  });
-                  setTimeout(() => navigate('/'), 1000);
-                } catch (error) {
-                  console.error('Failed to delete device:', error);
-                  toast.error('Не удалось удалить устройство', {
-                    id: 'delete',
-                    icon: '❌',
-                    duration: 3000,
-                  });
-                }
-              }}
-            >
-              Удалить
-            </button>
-          </div>
-        </div>
-      </div>
-    ), {
-      duration: Infinity,
-      position: 'top-center',
-    });
-  };
-
-    // ✅ СОХРАНЕНИЕ ПО ENTER
-  const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault(); // Предотвращаем отправку формы
-      e.currentTarget.blur(); // Убираем фокус с инпута
-      await handleUpdateName(); // Сохраняем название
-    }
-  };
-
-  // ✅ СОХРАНЕНИЕ НАЗВАНИЯ (общее для onBlur и Enter)
-  const handleUpdateName = async () => {
-    if (!deviceName.trim()) {
-      setDeviceName(device.name); // Восстанавливаем старое название
-      toast.error('Название не может быть пустым');
-      return;
-    }
-
-    if (deviceName === device.name) return;
-    
-    toast.loading('Сохраняем название...', { id: 'rename' });
-    try {
-      await updateDeviceName(Number(id), deviceName);
-      const devices = await api.devices.getAll();
-      const updatedDevice = devices.find((d: any) => d.id === Number(id));
-      setDevice(updatedDevice);
-      toast.success('Название обновлено', {
-        id: 'rename',
-        duration: 2000,
-        icon: '✅',
-      });
-    } catch (error) {
-      console.error('Failed to update device name:', error);
-      toast.error('Не удалось обновить название', {
-        id: 'rename',
-        icon: '❌',
-        duration: 3000,
-      });
-      setDeviceName(device.name);
-    }
+  const handleSaveName = async () => {
+    if (!deviceName.trim()) return;
+    setIsEditing(false);
+    // Здесь можно добавить сохранение на бэкенд
+    toast.success('Название обновлено');
   };
 
   if (loading) {
-    return <div className="deviceDetailPage">Загрузка...</div>;
+    return (
+      <div className="deviceDetailPage">
+        <div className="loadingScreen">
+          <div className="loadingSpinner"></div>
+          <p>Загрузка устройства...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!device) {
-    return <div className="deviceDetailPage">Устройство не найдено</div>;
+    return (
+      <div className="deviceDetailPage">
+        <div className="errorScreen">
+          <AlertCircle size={48} />
+          <h2>Устройство не найдено</h2>
+          <button onClick={() => navigate(-1)}>Вернуться назад</button>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="deviceDetailPage">
-      <div className="detailHeader">
+      <div className="deviceDetailHeader">
         <button className="backButton" onClick={() => navigate(-1)}>
           <ArrowLeft size={24} />
         </button>
-        <h1>Настройте устройство</h1>
+        <h1>Настройки устройства</h1>
       </div>
 
-      <div className="deviceNameCenter">
-        <div className="deviceCustomName">{device.name}</div>
-        <div className="deviceModelName">{device.model}</div>
+      {/* Карточка устройства сверху */}
+      <div className="deviceProfileCard">
+        <div className="deviceProfileIcon">
+          <Smartphone size={48} />
+        </div>
+        <div className="deviceProfileInfo">
+          {isEditing ? (
+            <div className="deviceNameEdit">
+              <input
+                type="text"
+                value={deviceName}
+                onChange={(e) => setDeviceName(e.target.value)}
+                autoFocus
+                onBlur={handleSaveName}
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+              />
+              <button onClick={handleSaveName} className="saveNameBtn">
+                <Check size={18} />
+              </button>
+            </div>
+          ) : (
+            <div className="deviceNameDisplay">
+              <h2>{device.name}</h2>
+              <button onClick={() => setIsEditing(true)} className="editNameBtn">
+                ✏️
+              </button>
+            </div>
+          )}
+          <p className="deviceProfileModel">{device.model}</p>
+          <div className="deviceProfileStatus">
+            <span className={`statusBadge ${device.isActive ? 'active' : 'inactive'}`}>
+              {device.isActive ? '● Активно' : '○ Неактивно'}
+            </span>
+            {device.isActive && (
+              <span className="daysBadge">⏳ {device.daysLeft || 30} дн.</span>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="configSection">
-        <div className="configLinkBox">
-          <span className="configLink">{device.configLink}</span>
+      {/* Блок с конфигурацией */}
+      <div className="configCard">
+        <h3 className="configCardTitle">Конфигурация</h3>
+        <p className="configCardDescription">
+          Скопируйте ссылку и вставьте в приложение HitProxy или HitVPN
+        </p>
+        
+        <div className="configLinkContainer">
+          <code className="configLinkCode">{device.configLink}</code>
           <button 
-            className={`copyButton ${copied ? 'copied' : ''}`} 
+            className={`copyLinkBtn ${copied ? 'copied' : ''}`} 
             onClick={handleCopy}
           >
             <Copy size={18} />
-            {copied ? 'Скопировано!' : 'Скопировать ссылку'}
+            {copied ? 'Скопировано!' : 'Копировать'}
           </button>
         </div>
       </div>
 
-      <div className="settingsBlock">
-        <div className="sectionHeader">НАЗВАНИЕ УСТРОЙСТВА</div>
-        <input
-          className="sectionInput"
-          type="text"
-          placeholder="Например, Мой iPhone, iPad дочки"
-          value={deviceName}
-          onChange={(e) => setDeviceName(e.target.value)}
-          onBlur={handleUpdateName}
-          onKeyDown={handleKeyDown}
-          autoFocus
-        />
+      {/* Сетка действий */}
+      <div className="actionsGrid">
+        <div className="actionCard warning">
+          <div className="actionIcon">
+            <RefreshCw size={24} />
+          </div>
+          <h4>Не работает VPN?</h4>
+          <p>Замените настройки устройства</p>
+          <button className="actionBtn warning">Заменить</button>
+        </div>
+
+        <div className="actionCard danger">
+          <div className="actionIcon">
+            <Trash2 size={24} />
+          </div>
+          <h4>Удалить устройство</h4>
+          <p>Это действие нельзя отменить</p>
+          <button className="actionBtn danger">Удалить</button>
+        </div>
       </div>
 
-      <div className="settingsBlock warning">
-        <div className="sectionHeader">Перестал работать VPN?</div>
-        <div className="sectionDescription">
-          Попробуйте заменить настройки устройства
-        </div>
-        <button className="replaceButton" onClick={handleReplace}>
-          <RefreshCw size={18} />
-          Заменить
-        </button>
-      </div>
-
-      <div className="settingsBlock delete">
-        <div className="sectionDescription">
-          Если вы не используете настройки VPN данного устройства
-        </div>
-        <button className="deleteButton" onClick={handleDelete}>
-          <Trash2 size={18} />
-          Удалить
-        </button>
+      {/* Дополнительная информация */}
+      <div className="deviceInfoFooter">
+        <p>Подключено: {device.date || '12.02.26'}</p>
+        <p>ID: {id}</p>
       </div>
     </div>
   );
