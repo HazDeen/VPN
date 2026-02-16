@@ -1,19 +1,19 @@
-import { Controller, Get, Query, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Get('token')
-  async loginWithToken(@Query('token') token: string) {
-    console.log(`📥 Login attempt with token: ${token}`);
+  @Post('telegram-id')
+  async loginWithTelegramId(@Body() body: { telegramId: number }) {
+    console.log(`📥 Login attempt with telegramId: ${body.telegramId}`);
     
-    if (!token) {
-      throw new UnauthorizedException('Token required');
+    if (!body.telegramId) {
+      throw new UnauthorizedException('Telegram ID required');
     }
     
-    const user = await this.authService.findByToken(token);
+    const user = await this.authService.findByTelegramId(body.telegramId);
     
     return {
       success: true,

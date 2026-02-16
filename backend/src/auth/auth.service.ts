@@ -6,22 +6,16 @@ import * as crypto from 'crypto';
 export class AuthService {
   constructor(private prisma: PrismaService) {}
 
-  async findByToken(token: string) {
-    console.log(`🔍 Searching for token: ${token}`);
+  async findByTelegramId(telegramId: number) {
+    console.log(`🔍 Searching for user with telegramId: ${telegramId}`);
     
     const user = await this.prisma.user.findUnique({
-      where: { authToken: token },
+      where: { telegramId: BigInt(telegramId) },
     });
 
     if (!user) {
-      console.log('❌ User not found for token');
-      throw new UnauthorizedException('Invalid token');
-    }
-
-    // Проверяем, не истёк ли токен
-    if (user.tokenExpires && user.tokenExpires < new Date()) {
-      console.log('❌ Token expired');
-      throw new UnauthorizedException('Token expired');
+      console.log('❌ User not found');
+      throw new UnauthorizedException('User not found. Please send /start to bot first.');
     }
 
     console.log(`✅ User found: ${user.id}`);
@@ -49,18 +43,6 @@ export class AuthService {
           balance: 0,
         },
       });
-    } else {
-      // Если токен истёк или его нет - обновляем
-      if (!user.authToken || !user.tokenExpires || user.tokenExpires < new Date()) {
-        const { token, expiresAt } = this.generateAuthToken();
-        user = await this.prisma.user.update({
-          where: { id: user.id },
-          data: {
-            authToken: token,
-            tokenExpires: expiresAt,
-          },
-        });
-      }
     }
 
     return user;
@@ -71,23 +53,6 @@ export class AuthService {
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
     return { token, expiresAt };
-  }
-
-  async refreshToken(userId: number) {
-    const { token, expiresAt } = this.generateAuthToken();
-    
-    const user = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        authToken: token,
-        tokenExpires: expiresAt,
-      },
-    });
-
-    return {
-      token: user.authToken,
-      expiresAt: user.tokenExpires,
-    };
   }
 
   async getMe(userId: number) {
