@@ -1,19 +1,14 @@
 const API_URL = 'https://vpn-production-702c.up.railway.app';
 
 const getUsername = (): string => {
-  // Пробуем до 5 раз с интервалом 100мс
-  for (let i = 0; i < 5; i++) {
-    const user = localStorage.getItem('user');
-    if (user) {
-      try {
-        const parsed = JSON.parse(user);
-        if (parsed.username) {
-          return parsed.username;
-        }
-      } catch (e) {}
+  const user = localStorage.getItem('user');
+  if (user) {
+    try {
+      const parsed = JSON.parse(user);
+      return parsed.username || '';
+    } catch (e) {
+      console.error('Failed to parse user from localStorage', e);
     }
-    // Ждём 100мс перед следующей попыткой
-    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
   }
   return '';
 };
@@ -78,7 +73,6 @@ export const api = {
   transactions: {
     getAll: () => apiFetch('/transactions'),
   },
-  // 👇 ДОБАВЛЯЕМ АДМИН-МЕТОДЫ
   admin: {
     getAllUsers: () => apiFetch('/admin/users'),
     getUserDevices: (userId: number) => apiFetch(`/admin/users/${userId}/devices`),
