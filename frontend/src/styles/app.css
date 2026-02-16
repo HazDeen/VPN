@@ -1335,6 +1335,25 @@ body {
   height: 20px;
 }
 
+.retryButton {
+  margin-top: 16px;
+  padding: 12px 20px;
+  border-radius: 30px;
+  border: 1px solid var(--accent-light);
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.retryButton:active {
+  background: var(--accent-alpha);
+  transform: scale(0.98);
+}
+
 /* -------------------------------------------- */
 /* 10. УТИЛИТЫ */
 /* -------------------------------------------- */

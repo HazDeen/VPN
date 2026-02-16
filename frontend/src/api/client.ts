@@ -2,7 +2,6 @@ const API_URL = 'https://vpn-production-702c.up.railway.app';
 
 const getInitData = (): string => {
   try {
-    // ✅ Telegram Web App (мобильное приложение)
     // @ts-ignore
     if (window.Telegram?.WebApp?.initData) {
       console.log('✅ Using Telegram.WebApp.initData');
@@ -10,25 +9,16 @@ const getInitData = (): string => {
       return window.Telegram.WebApp.initData;
     }
     
-    // ✅ Telegram Web (web.telegram.org) - ЭТО ВАЖНО!
     // @ts-ignore
     if (window.Telegram?.WebView?.initParams?.tgWebAppData) {
       console.log('✅ Using Telegram.WebView.initParams.tgWebAppData');
       // @ts-ignore
-      const data = window.Telegram.WebView.initParams.tgWebAppData;
-      console.log('📦 WebView data:', data);
-      return data;
+      console.log('📦 WebView object:', window.Telegram.WebView);
+      // @ts-ignore
+      return window.Telegram.WebView.initParams.tgWebAppData;
     }
     
-    // ✅ URL параметры (для теста)
-    const urlParams = new URLSearchParams(window.location.search);
-    const tgWebAppData = urlParams.get('tgWebAppData');
-    if (tgWebAppData) {
-      console.log('✅ Using URL tgWebAppData');
-      return tgWebAppData;
-    }
-    
-    console.warn('⚠️ No initData found');
+    console.warn('⚠️ No initData found, window.Telegram:', window.Telegram);
   } catch (e) {
     console.error('❌ Error getting initData:', e);
   }
