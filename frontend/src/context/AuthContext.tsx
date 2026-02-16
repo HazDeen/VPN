@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { api } from '../api/client';
 
 interface User {
   id: number;
@@ -26,24 +27,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Загружаем пользователя при старте
+  // Проверяем валидность пользователя при загрузке
   useEffect(() => {
-    const loadUser = () => {
+    const validateUser = async () => {
       const savedUser = localStorage.getItem('user');
-      if (savedUser) {
-        try {
-          const parsedUser = JSON.parse(savedUser);
-          setUser(parsedUser);
-          console.log('✅ User loaded:', parsedUser.username);
-        } catch (e) {
-          console.error('Failed to parse user');
+      
+      if (!savedUser) {
+        console.log('❌ No user in localStorage');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        
+        // 👇 ВАЖНО: проверяем, что пользователь действительно существует в БД
+        // Запрашиваем профиль с сервера
+        const profile = await api.user.getProfile();
+        
+        // Сравниваем данные
+        if (profile.username === parsedUser.username) {
+          console.log('✅ User validated:', profile.username);
+          setUser(profile);
+        } else {
+          console.log('❌ User data mismatch, clearing storage');
           localStorage.removeItem('user');
         }
+      } catch (error) {
+        console.error('❌ Failed to validate user:', error);
+        localStorage.removeItem('user');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    loadUser();
+    validateUser();
   }, []);
 
   // Редирект только если нет пользователя и мы не на логине
@@ -52,8 +70,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const isLoginPage = location.pathname.includes('/login');
       
       if (!user && !isLoginPage) {
-        console.log('🚫 No user, redirecting to login');
+        console.log('🚫 No valid user, redirecting to login');
         navigate('/login');
+      }
+      
+      if (user && isLoginPage) {
+        console.log('✅ User already logged in, redirecting to home');
+        navigate('/');
       }
     }
   }, [user, loading, navigate, location]);
