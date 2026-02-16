@@ -1,24 +1,8 @@
 const API_URL = 'https://vpn-production-702c.up.railway.app';
 
-const getUsername = (): string => {
-  const user = localStorage.getItem('user');
-  if (user) {
-    try {
-      const parsed = JSON.parse(user);
-      return parsed.username || '';
-    } catch (e) {
-      console.error('Failed to parse user from localStorage', e);
-    }
-  }
-  return '';
-};
-
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  const username = getUsername();
-  
   const headers = {
     'Content-Type': 'application/json',
-    'X-Username': username,
     ...options.headers,
   };
 
@@ -47,9 +31,9 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
 
 export const api = {
   auth: {
-    loginByUsername: (username: string) => apiFetch('/auth/login-by-username', {
+    login: (username: string, password: string) => apiFetch('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username })
+      body: JSON.stringify({ username, password })
     }),
   },
   user: {

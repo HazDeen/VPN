@@ -5,15 +5,15 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('login-by-username')
-  async loginByUsername(@Body() body: { username: string }) {
+  @Post('login')
+  async login(@Body() body: { username: string; password: string }) {
     console.log(`📥 Login attempt with username: ${body.username}`);
     
-    if (!body.username) {
-      throw new UnauthorizedException('Username required');
+    if (!body.username || !body.password) {
+      throw new UnauthorizedException('Username and password required');
     }
     
-    const user = await this.authService.findByUsername(body.username);
+    const user = await this.authService.validateUser(body.username, body.password);
     
     return {
       success: true,

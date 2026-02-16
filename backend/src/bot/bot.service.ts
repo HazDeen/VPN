@@ -1,11 +1,14 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { Telegraf } from 'telegraf';
 import { PrismaService } from '../prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class BotService implements OnModuleInit, OnModuleDestroy {
   private bot: Telegraf;
   private readonly logger = new Logger(BotService.name);
+  // Хранилище временных состояний (ожидание ввода пароля)
+  private waitingForPassword = new Map<number, string>();
 
   constructor(private prisma: PrismaService) {
     const botToken = process.env.BOT_TOKEN;
@@ -27,7 +30,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
 
       this.registerCommands();
 
-      // Запускаем бота без await, чтобы не блокировать сервер
       this.bot.launch({
         dropPendingUpdates: true,
       }).then(() => {
@@ -75,28 +77,109 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
 
         this.logger.log(`✅ Пользователь ${user.id} создан/обновлён`);
 
-        // Отправляем приветствие
-        await ctx.reply(
-          `🎉 Добро пожаловать, ${firstName}!\n\n` +
-          `💰 Твой баланс: ${user.balance} ₽\n` +
-          `🚀 Открыть Mini App: https://hazdeen.github.io/VPN/`,
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [{ 
-                  text: '🌐 Открыть VPN', 
-                  web_app: { 
-                    url: 'https://hazdeen.github.io/VPN/' 
-                  } 
-                }]
-              ]
-            }
+        let message = `🎉 Добро пожаловать, ${firstName}!\n\n`;
+        message += `💰 Твой баланс: ${user.balance} ₽\n`;
+        
+        if (!user.password) {
+          message += `\n🔐 Установи пароль командой /setpass`;
+        } else {
+          message += `\n🔑 Войти в Mini App: https://hazdeen.github.io/VPN/`;
+        }
+
+        await ctx.reply(message, {
+          reply_markup: {
+            inline_keyboard: [
+              [{ 
+                text: '🌐 Открыть VPN', 
+                web_app: { 
+                  url: 'https://hazdeen.github.io/VPN/' 
+                } 
+              }]
+            ]
           }
-        );
+        });
       } catch (error) {
         const err = error as Error;
         this.logger.error(`❌ Ошибка /start: ${err.message}`);
         await ctx.reply('⚠️ Произошла ошибка. Попробуй позже.');
+      }
+    });
+
+    // ==========================================
+    // КОМАНДА /setpass - УСТАНОВКА ПАРОЛЯ
+    // ==========================================
+    this.bot.command('setpass', async (ctx) => {
+      const telegramId = ctx.from.id;
+      
+      const user = await this.prisma.user.findUnique({
+        where: { telegramId: BigInt(telegramId) },
+      });
+
+      if (!user) {
+        await ctx.reply('❌ Сначала напиши /start');
+        return;
+      }
+
+      // Если пароль уже есть - спрашиваем, хочет ли сменить
+      if (user.password) {
+        await ctx.reply('🔐 У тебя уже есть пароль. Хочешь сменить? Отправь /resetpass');
+        return;
+      }
+
+      // Запоминаем, что ждём пароль от этого пользователя
+      this.waitingForPassword.set(telegramId, 'set');
+      await ctx.reply('🔑 Введи новый пароль:');
+    });
+
+    // ==========================================
+    // КОМАНДА /resetpass - СБРОС ПАРОЛЯ
+    // ==========================================
+    this.bot.command('resetpass', async (ctx) => {
+      const telegramId = ctx.from.id;
+      
+      this.waitingForPassword.set(telegramId, 'reset');
+      await ctx.reply('🔑 Введи новый пароль:');
+    });
+
+    // ==========================================
+    // ОБРАБОТЧИК ТЕКСТОВЫХ СООБЩЕНИЙ (ДЛЯ ПАРОЛЕЙ)
+    // ==========================================
+    this.bot.on('text', async (ctx) => {
+      const telegramId = ctx.from.id;
+      const text = ctx.message.text;
+
+      // Если не ждём пароль - игнорируем
+      if (!this.waitingForPassword.has(telegramId)) {
+        if (!text.startsWith('/')) {
+          await ctx.reply('Используй /help для списка команд');
+        }
+        return;
+      }
+
+      const action = this.waitingForPassword.get(telegramId);
+      
+      try {
+        // Хешируем пароль
+        const hashedPassword = await bcrypt.hash(text, 10);
+
+        const user = await this.prisma.user.update({
+          where: { telegramId: BigInt(telegramId) },
+          data: { password: hashedPassword },
+        });
+
+        await ctx.reply(
+          action === 'set' 
+            ? '✅ Пароль успешно установлен!'
+            : '✅ Пароль успешно изменён!'
+        );
+
+        // Очищаем состояние ожидания
+        this.waitingForPassword.delete(telegramId);
+
+      } catch (error) {
+        this.logger.error(`❌ Ошибка при установке пароля: ${error.message}`);
+        await ctx.reply('⚠️ Не удалось установить пароль. Попробуй позже.');
+        this.waitingForPassword.delete(telegramId);
       }
     });
 
@@ -124,8 +207,7 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
         const adminUrl = 'https://hazdeen.github.io/VPN/#/admin';
         
         await ctx.reply(
-          `🔑 Админ-панель\n\n` +
-          `Перейди по ссылке для управления пользователями:`,
+          `🔑 Админ-панель\n\nПерейди по ссылке для управления пользователями:`,
           {
             reply_markup: {
               inline_keyboard: [
@@ -144,7 +226,7 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
     });
 
     // ==========================================
-    // КОМАНДА /balance - ПРОВЕРКА БАЛАНСА (ОПЦИОНАЛЬНО)
+    // КОМАНДА /balance - ПРОВЕРКА БАЛАНСА
     // ==========================================
     this.bot.command('balance', async (ctx) => {
       try {
@@ -187,16 +269,12 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       await ctx.reply(
         `📚 Доступные команды:\n\n` +
         `/start - Начать работу\n` +
+        `/setpass - Установить пароль\n` +
+        `/resetpass - Сбросить пароль\n` +
         `/balance - Проверить баланс\n` +
         `/admin - Админ-панель (только для админов)\n` +
         `/help - Показать это сообщение`
       );
-    });
-
-    // Обработчик текстовых сообщений
-    this.bot.on('text', async (ctx) => {
-      if (ctx.message.text.startsWith('/')) return;
-      await ctx.reply('Используй /help для списка команд');
     });
   }
 

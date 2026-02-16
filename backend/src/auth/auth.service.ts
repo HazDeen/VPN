@@ -1,12 +1,13 @@
 import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService) {}
 
-  async findByUsername(username: string) {
-    console.log(`🔍 Searching for user with username: @${username}`);
+  async validateUser(username: string, password: string) {
+    console.log(`🔍 Validating user @${username}`);
     
     const user = await this.prisma.user.findFirst({
       where: { 
@@ -18,11 +19,20 @@ export class AuthService {
     });
 
     if (!user) {
-      console.log('❌ User not found');
-      throw new UnauthorizedException('Пользователь не найден. Напишите /start боту');
+      throw new UnauthorizedException('Пользователь не найден');
     }
 
-    console.log(`✅ User found: ${user.id}`);
+    if (!user.password) {
+      throw new UnauthorizedException('Пароль не установлен. Напишите /setpass в боте');
+    }
+
+    // Проверяем пароль
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Неверный пароль');
+    }
+
     return user;
   }
 

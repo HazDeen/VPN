@@ -13,6 +13,7 @@ model User {
   firstName   String?
   lastName    String?
   username    String?
+  password    String?
   balance     Float    @default(0)
   isAdmin     Boolean  @default(false)
   createdAt   DateTime @default(now()) @map("created_at")
