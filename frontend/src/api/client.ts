@@ -2,10 +2,10 @@ const API_URL = 'https://vpn-production-702c.up.railway.app';
 
 const getInitData = (): string => {
   try {
-    // ✅ Telegram Web App (мобильное приложение)
+    // ✅ Telegram Web App
     // @ts-ignore
     if (window.Telegram?.WebApp?.initData) {
-      console.log('✅ Using Telegram.WebApp.initData');
+      console.log('✅ Found initData in WebApp');
       // @ts-ignore
       return window.Telegram.WebApp.initData;
     }
@@ -13,24 +13,22 @@ const getInitData = (): string => {
     // ✅ Telegram Web (web.telegram.org)
     // @ts-ignore
     if (window.Telegram?.WebView?.initParams?.tgWebAppData) {
-      console.log('✅ Using Telegram.WebView.initParams.tgWebAppData');
+      console.log('✅ Found initData in WebView');
       // @ts-ignore
       return window.Telegram.WebView.initParams.tgWebAppData;
     }
     
-    // ✅ URL параметры (для теста)
-    const urlParams = new URLSearchParams(window.location.search);
-    const tgWebAppData = urlParams.get('tgWebAppData');
-    if (tgWebAppData) {
-      console.log('✅ Using URL tgWebAppData');
-      return tgWebAppData;
-    }
-    
+    console.warn('⚠️ No initData found');
   } catch (e) {
     console.warn('Error getting initData:', e);
   }
   
-  console.warn('⚠️ No initData found');
+  // 👇 ДЛЯ ТЕСТА ВНЕ TELEGRAM
+  if (window.location.hostname === 'localhost') {
+    console.log('⚠️ Using mock initData for localhost');
+    return "query_id=AAH5VE4M...&user=%7B%22id%22%3A1314191617%2C%22first_name%22%3A%22hazdeen%22%7D";
+  }
+  
   return '';
 };
   
