@@ -2,39 +2,45 @@ const API_URL = 'https://vpn-production-702c.up.railway.app';
 
 const getInitData = (): string => {
   try {
-    // ✅ Telegram Web App
+    // ✅ Telegram Web App (мобильное приложение)
     // @ts-ignore
     if (window.Telegram?.WebApp?.initData) {
-      console.log('✅ Found initData in WebApp');
+      console.log('✅ Using Telegram.WebApp.initData');
       // @ts-ignore
       return window.Telegram.WebApp.initData;
     }
     
-    // ✅ Telegram Web (web.telegram.org)
+    // ✅ Telegram Web (web.telegram.org) - ЭТО ВАЖНО!
     // @ts-ignore
     if (window.Telegram?.WebView?.initParams?.tgWebAppData) {
-      console.log('✅ Found initData in WebView');
+      console.log('✅ Using Telegram.WebView.initParams.tgWebAppData');
       // @ts-ignore
-      return window.Telegram.WebView.initParams.tgWebAppData;
+      const data = window.Telegram.WebView.initParams.tgWebAppData;
+      console.log('📦 WebView data:', data);
+      return data;
+    }
+    
+    // ✅ URL параметры (для теста)
+    const urlParams = new URLSearchParams(window.location.search);
+    const tgWebAppData = urlParams.get('tgWebAppData');
+    if (tgWebAppData) {
+      console.log('✅ Using URL tgWebAppData');
+      return tgWebAppData;
     }
     
     console.warn('⚠️ No initData found');
   } catch (e) {
-    console.warn('Error getting initData:', e);
-  }
-  
-  // 👇 ДЛЯ ТЕСТА ВНЕ TELEGRAM
-  if (window.location.hostname === 'localhost') {
-    console.log('⚠️ Using mock initData for localhost');
-    return "query_id=AAH5VE4M...&user=%7B%22id%22%3A1314191617%2C%22first_name%22%3A%22hazdeen%22%7D";
+    console.error('❌ Error getting initData:', e);
   }
   
   return '';
 };
-  
 
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const initData = getInitData();
+  
+  console.log(`📡 Fetching: ${API_URL}${endpoint}`);
+  console.log(`🔑 Auth header present: ${!!initData}`);
   
   const headers = {
     'Content-Type': 'application/json',
@@ -49,18 +55,15 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     });
 
     const data = await response.json();
+    console.log(`📥 Response status: ${response.status}`);
 
     if (!response.ok) {
-      throw {
-        status: response.status,
-        message: data.message || 'API Error',
-        error: data.error
-      };
+      throw { status: response.status, message: data.message || 'API Error' };
     }
 
     return data;
   } catch (error) {
-    console.error(`API Error (${endpoint}):`, error);
+    console.error(`❌ API Error (${endpoint}):`, error);
     throw error;
   }
 }

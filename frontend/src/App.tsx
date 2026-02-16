@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import AuthProvider from "./context/AuthContext"; // 👈 ИМПОРТ ПО УМОЛЧАНИЮ
+import { AuthProvider } from "./context/AuthContext"; // 👈 ИМПОРТ ПО УМОЛЧАНИЮ
 import Home from "./pages/Home";
 import TopUp from "./pages/TopUp";
 import History from "./pages/History";

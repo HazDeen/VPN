@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { api } from '../api/client';
+import { useNavigate } from 'react-router-dom';
 
 interface User {
   id: number;
@@ -23,16 +24,27 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const checkAuth = async () => {
+    try {
+      setLoading(true);
+      
+      // Пробуем получить профиль
+      const profile = await api.user.getProfile();
+      setUser(profile);
+      navigate('/');
+    } catch (error) {
+      console.log('Not authenticated, redirecting to login');
+      navigate('/login');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async () => {
     try {
       setLoading(true);
-      console.log('🔐 Login started...');
-      
-      // ✅ ПРОВЕРЯЕМ INITDATA
-      // @ts-ignore
-      const initData = window.Telegram?.WebApp?.initData || window.Telegram?.WebView?.initParams?.tgWebAppData;
-      console.log('📦 initData exists:', !!initData);
       
       const authData = await api.auth.telegram();
       console.log('✅ Auth response:', authData);
@@ -41,20 +53,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('✅ Profile response:', profileData);
       
       setUser(profileData);
+      navigate('/');
     } catch (error) {
       console.error('❌ Login failed:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => setUser(null);
-  
-  const updateBalance = (newBalance: number) => {
-    if (user) setUser({ ...user, balance: newBalance });
+  const logout = () => {
+    setUser(null);
+    navigate('/login');
   };
 
-  useEffect(() => { login(); }, []);
+  const updateBalance = (newBalance: number) => {
+    if (user) {
+      setUser({ ...user, balance: newBalance });
+    }
+  };
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, updateBalance }}>
@@ -65,8 +86,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  if (context === undefined) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
   return context;
 };
-
-export default AuthProvider;

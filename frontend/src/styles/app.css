@@ -1248,6 +1248,93 @@ body {
   opacity: 0.9;
 }
 
+/* ====== LOGIN PAGE ====== */
+.loginPage {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loginContainer {
+  width: 100%;
+  text-align: center;
+}
+
+.loginTitle {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 32px;
+  letter-spacing: -0.5px;
+}
+
+.loginCard {
+  background: var(--bg-block);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 32px 24px;
+  box-shadow: var(--shadow);
+}
+
+.loginDescription {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 32px;
+}
+
+.warningBox {
+  background: var(--warning-alpha);
+  border: 1px solid var(--warning);
+  border-radius: 16px;
+  padding: 20px;
+  color: var(--warning);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.warningBox p:first-child {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.telegramLoginButton {
+  width: 100%;
+  padding: 18px;
+  border-radius: 30px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.telegramLoginButton:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.telegramLoginButton:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.telegramLoginButton svg {
+  width: 20px;
+  height: 20px;
+}
+
 /* -------------------------------------------- */
 /* 10. УТИЛИТЫ */
 /* -------------------------------------------- */
