@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext"; // 👈 ИМПОРТ ПО УМОЛЧАНИЮ
+import { AuthProvider } from "./context/AuthContext";
+import Login from "./pages/Login";
 import Home from "./pages/Home";
 import TopUp from "./pages/TopUp";
 import History from "./pages/History";
@@ -29,6 +30,7 @@ function App() {
           }}
         />
         <Routes>
+          <Route path="/login" element={<Login />} />
           <Route path="/" element={<Home />} />
           <Route path="/topup" element={<TopUp />} />
           <Route path="/history" element={<History />} />
