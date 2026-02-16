@@ -26,10 +26,15 @@ export default function Login() {
       
       console.log('✅ Успешный вход:', response);
       
+      // Сохраняем пользователя
       localStorage.setItem('user', JSON.stringify(response.user));
+      
       toast.success(`✅ Добро пожаловать, ${response.user.firstName || username}!`);
       
-      navigate('/');
+      // 👉 Даём время на обновление контекста
+      setTimeout(() => {
+        navigate('/');
+      }, 100);
       
     } catch (error: any) {
       console.error('❌ Ошибка входа:', error);

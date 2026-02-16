@@ -27,9 +27,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Проверяем валидность пользователя при загрузке
+  // Загружаем пользователя из localStorage при старте
   useEffect(() => {
-    const validateUser = async () => {
+    const loadUser = async () => {
       const savedUser = localStorage.getItem('user');
       
       if (!savedUser) {
@@ -41,16 +41,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const parsedUser = JSON.parse(savedUser);
         
-        // 👇 ВАЖНО: проверяем, что пользователь действительно существует в БД
-        // Запрашиваем профиль с сервера
+        // Пытаемся получить профиль с сервера
         const profile = await api.user.getProfile();
         
-        // Сравниваем данные
         if (profile.username === parsedUser.username) {
           console.log('✅ User validated:', profile.username);
           setUser(profile);
         } else {
-          console.log('❌ User data mismatch, clearing storage');
+          console.log('❌ User data mismatch');
           localStorage.removeItem('user');
         }
       } catch (error) {
@@ -61,23 +59,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    validateUser();
+    loadUser();
   }, []);
 
-  // Редирект только если нет пользователя и мы не на логине
+  // Редирект только после загрузки
   useEffect(() => {
     if (!loading) {
       const isLoginPage = location.pathname.includes('/login');
       
       if (!user && !isLoginPage) {
-        console.log('🚫 No valid user, redirecting to login');
+        console.log('🚫 No user, redirecting to login');
         navigate('/login');
       }
       
-      if (user && isLoginPage) {
-        console.log('✅ User already logged in, redirecting to home');
-        navigate('/');
-      }
+      // 👉 Убираем автоматический редирект с login на home
+      // Пусть пользователь сам решает, когда войти
     }
   }, [user, loading, navigate, location]);
 
