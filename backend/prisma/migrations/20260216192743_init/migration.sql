@@ -6,8 +6,7 @@ CREATE TABLE "users" (
     "lastName" TEXT,
     "username" TEXT,
     "balance" DOUBLE PRECISION NOT NULL DEFAULT 0,
-    "authToken" TEXT NOT NULL,
-    "tokenExpires" TIMESTAMP(3),
+    "isAdmin" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -45,9 +44,6 @@ CREATE TABLE "transactions" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_telegramId_key" ON "users"("telegramId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "users_authToken_key" ON "users"("authToken");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "devices_configLink_key" ON "devices"("configLink");

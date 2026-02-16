@@ -14,8 +14,7 @@ model User {
   lastName    String?
   username    String?
   balance     Float    @default(0)
-  authToken   String   @unique
-  tokenExpires DateTime? // 👈 ДОБАВЛЯЕМ ВРЕМЯ ИСТЕЧЕНИЯ
+  isAdmin     Boolean  @default(false)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

@@ -17,7 +17,7 @@ export class AdminService {
     lastName: user.lastName,
     username: user.username,
     balance: user.balance,
-    isAdmin: user.isAdmin, // 👈 ТЕПЕРЬ РАБОТАЕТ!
+    isAdmin: user.isAdmin,
     createdAt: user.createdAt,
   }));
 }
