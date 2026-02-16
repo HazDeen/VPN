@@ -6,7 +6,8 @@ import { DeviceModule } from './device/device.module';
 import { AuthModule } from './auth/auth.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { LoggerModule } from './logger/logger.module';
-// import { BotModule } from './bot/bot.module';
+import { BotModule } from './bot/bot.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { LoggerModule } from './logger/logger.module';
     AuthModule,
     TransactionModule,
     LoggerModule,
-    // BotModule,
+    BotModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

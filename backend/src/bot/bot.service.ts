@@ -1,14 +1,11 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { Telegraf } from 'telegraf';
 import { PrismaService } from '../prisma/prisma.service';
-import * as crypto from 'crypto';
 
 @Injectable()
 export class BotService implements OnModuleInit, OnModuleDestroy {
   private bot: Telegraf;
   private readonly logger = new Logger(BotService.name);
-  private retryCount = 0;
-  private readonly MAX_RETRIES = 3;
 
   constructor(private prisma: PrismaService) {
     const botToken = process.env.BOT_TOKEN;
@@ -19,10 +16,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    await this.startBot();
-  }
-
-  private async startBot() {
     try {
       this.logger.log('🚀 Бот запускается...');
 
@@ -39,29 +32,17 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       });
       
       this.logger.log('✅ Бот успешно запущен!');
-      this.retryCount = 0;
-
+      
     } catch (error) {
       const err = error as Error;
       this.logger.error(`❌ Ошибка запуска бота: ${err.message}`);
-
-      if (err.message.includes('409') || err.message.includes('Conflict')) {
-        this.retryCount++;
-        
-        if (this.retryCount <= this.MAX_RETRIES) {
-          const delay = this.retryCount * 5000;
-          this.logger.log(`🔄 Попытка ${this.retryCount}/${this.MAX_RETRIES} через ${delay/1000} секунд...`);
-          
-          setTimeout(() => this.startBot(), delay);
-        } else {
-          this.logger.error('❌ Превышено максимальное количество попыток');
-        }
-      }
     }
   }
 
   private registerCommands() {
-    // КОМАНДА /start - СОЗДАЁТ ПОЛЬЗОВАТЕЛЯ И ТОКЕН
+    // ==========================================
+    // КОМАНДА /start - РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ
+    // ==========================================
     this.bot.command('start', async (ctx) => {
       try {
         const telegramId = ctx.from.id;
@@ -71,11 +52,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
 
         this.logger.log(`📥 /start от @${username} (${telegramId})`);
 
-        // Генерируем токен
-        const authToken = crypto.randomBytes(32).toString('hex');
-        const tokenExpires = new Date();
-        tokenExpires.setHours(tokenExpires.getHours() + 24);
-
         // СОЗДАЁМ ИЛИ ОБНОВЛЯЕМ ПОЛЬЗОВАТЕЛЯ
         const user = await this.prisma.user.upsert({
           where: { telegramId: BigInt(telegramId) },
@@ -83,35 +59,32 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
             firstName,
             lastName,
             username,
-            authToken,
-            tokenExpires,
           },
           create: {
             telegramId: BigInt(telegramId),
             firstName,
             lastName,
             username,
-            authToken,
-            tokenExpires,
             balance: 0,
+            isAdmin: false, // по умолчанию не админ
           },
         });
 
-        this.logger.log(`✅ Пользователь ${user.id} создан/обновлён, токен действителен до ${tokenExpires}`);
+        this.logger.log(`✅ Пользователь ${user.id} создан/обновлён`);
 
-        const loginUrl = `https://hazdeen.github.io/VPN/#/login?token=${authToken}`;
-
+        // Отправляем приветствие
         await ctx.reply(
           `🎉 Добро пожаловать, ${firstName}!\n\n` +
           `💰 Твой баланс: ${user.balance} ₽\n` +
-          `🔑 Твоя персональная ссылка для входа (действительна 24 часа):\n${loginUrl}\n\n` +
-          `🚀 Перейди по ней, чтобы открыть Mini App`,
+          `🚀 Открыть Mini App: https://hazdeen.github.io/VPN/`,
           {
             reply_markup: {
               inline_keyboard: [
                 [{ 
-                  text: '🔑 Войти в аккаунт', 
-                  url: loginUrl 
+                  text: '🌐 Открыть VPN', 
+                  web_app: { 
+                    url: 'https://hazdeen.github.io/VPN/' 
+                  } 
                 }]
               ]
             }
@@ -124,8 +97,10 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       }
     });
 
-    // КОМАНДА /balance - ПРОВЕРКА БАЛАНСА
-    this.bot.command('balance', async (ctx) => {
+    // ==========================================
+    // КОМАНДА /admin - ССЫЛКА НА АДМИН-ПАНЕЛЬ
+    // ==========================================
+    this.bot.command('admin', async (ctx) => {
       try {
         const telegramId = ctx.from.id;
         
@@ -138,41 +113,32 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
           return;
         }
 
-        const activeDevices = await this.prisma.device.count({
-          where: {
-            userId: user.id,
-            isActive: true,
-          },
-        });
+        if (!user.isAdmin) {
+          await ctx.reply('⛔ У тебя нет прав администратора');
+          return;
+        }
 
-        const dailyRate = activeDevices * 10;
-        const daysLeft = dailyRate > 0 ? Math.floor(Number(user.balance) / dailyRate) : 30;
-
+        // Ссылка на админ-панель
+        const adminUrl = 'https://hazdeen.github.io/VPN/#/admin';
+        
         await ctx.reply(
-          `💰 Твой баланс: ${user.balance} ₽\n` +
-          `📱 Активных устройств: ${activeDevices}\n` +
-          `⏳ Хватит на ~${daysLeft > 30 ? 30 : daysLeft} дней`
+          `🔑 Админ-панель\n\n` +
+          `Перейди по ссылке для управления пользователями:`,
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [{ 
+                  text: '⚙️ Открыть админ-панель', 
+                  url: adminUrl 
+                }]
+              ]
+            }
+          }
         );
       } catch (error) {
         const err = error as Error;
-        this.logger.error(`❌ Ошибка /balance: ${err.message}`);
+        this.logger.error(`❌ Ошибка /admin: ${err.message}`);
       }
-    });
-
-    // КОМАНДА /help - СПРАВКА
-    this.bot.command('help', async (ctx) => {
-      await ctx.reply(
-        `📚 Доступные команды:\n\n` +
-        `/start - Начать работу и получить ссылку\n` +
-        `/balance - Проверить баланс\n` +
-        `/help - Показать это сообщение`
-      );
-    });
-
-    // Обработчик текстовых сообщений
-    this.bot.on('text', async (ctx) => {
-      if (ctx.message.text.startsWith('/')) return;
-      await ctx.reply('Используй /help для списка команд');
     });
   }
 

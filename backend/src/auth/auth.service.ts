@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -13,7 +12,7 @@ export class AuthService {
       where: { 
         username: {
           equals: username,
-          mode: 'insensitive', // игнорируем регистр
+          mode: 'insensitive',
         },
       },
     });
@@ -25,39 +24,6 @@ export class AuthService {
 
     console.log(`✅ User found: ${user.id}`);
     return user;
-  }
-
-  async findOrCreateUser(telegramData: any) {
-    const telegramId = BigInt(telegramData.id);
-    
-    let user = await this.prisma.user.findUnique({
-      where: { telegramId },
-    });
-
-    if (!user) {
-      const { token, expiresAt } = this.generateAuthToken();
-      
-      user = await this.prisma.user.create({
-        data: {
-          telegramId,
-          firstName: telegramData.first_name || '',
-          lastName: telegramData.last_name || '',
-          username: telegramData.username || '',
-          authToken: token,
-          tokenExpires: expiresAt,
-          balance: 0,
-        },
-      });
-    }
-
-    return user;
-  }
-
-  private generateAuthToken(): { token: string; expiresAt: Date } {
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24);
-    return { token, expiresAt };
   }
 
   async getMe(userId: number) {
@@ -76,6 +42,7 @@ export class AuthService {
       lastName: user.lastName,
       username: user.username,
       balance: user.balance,
+      isAdmin: user.isAdmin,
     };
   }
 }

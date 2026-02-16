@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";  // Убрали BrowserRouter
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { Toaster } from 'sonner';
@@ -7,13 +7,15 @@ import Home from "./pages/Home";
 import TopUp from "./pages/TopUp";
 import History from "./pages/History";
 import DeviceDetail from "./pages/DeviceDetail";
+import Admin from "./pages/Admin"; // 👈 ДОБАВЛЯЕМ
 import "./styles/app.css";
+import "./styles/admin.css"; // 👈 СТИЛИ АДМИНКИ
 
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        {/* HashRouter уже оборачивает в main.tsx */}
+        {/* HashRouter уже в main.tsx */}
         <Toaster 
           position="bottom-center"
           toastOptions={{
@@ -35,6 +37,7 @@ function App() {
           <Route path="/topup" element={<TopUp />} />
           <Route path="/history" element={<History />} />
           <Route path="/device/:id" element={<DeviceDetail />} />
+          <Route path="/admin" element={<Admin />} /> {/* 👈 НОВЫЙ РОУТ */}
         </Routes>
       </AuthProvider>
     </ThemeProvider>
