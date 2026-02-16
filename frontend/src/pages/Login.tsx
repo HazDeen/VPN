@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { toast } from 'sonner';
 import { LogIn } from 'lucide-react';
 
 export default function Login() {
-  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,10 +29,8 @@ export default function Login() {
       
       toast.success(`✅ Добро пожаловать, ${response.user.firstName || username}!`);
       
-      // 👉 Даём время на обновление контекста
-      setTimeout(() => {
-        navigate('/');
-      }, 100);
+      // 👉 ЖЁСТКАЯ ПЕРЕЗАГРУЗКА - ЭТО ТОЧНО СРАБОТАЕТ!
+      window.location.href = '/VPN/#/';
       
     } catch (error: any) {
       console.error('❌ Ошибка входа:', error);

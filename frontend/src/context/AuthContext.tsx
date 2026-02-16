@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { api } from '../api/client';
 
 interface User {
   id: number;
@@ -29,51 +28,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Загружаем пользователя из localStorage при старте
   useEffect(() => {
-    const loadUser = async () => {
+    const loadUser = () => {
       const savedUser = localStorage.getItem('user');
+      console.log('📦 Loading user from localStorage:', savedUser);
       
-      if (!savedUser) {
-        console.log('❌ No user in localStorage');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const parsedUser = JSON.parse(savedUser);
-        
-        // Пытаемся получить профиль с сервера
-        const profile = await api.user.getProfile();
-        
-        if (profile.username === parsedUser.username) {
-          console.log('✅ User validated:', profile.username);
-          setUser(profile);
-        } else {
-          console.log('❌ User data mismatch');
+      if (savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
+          console.log('✅ User loaded:', parsedUser.username);
+        } catch (e) {
+          console.error('❌ Failed to parse user:', e);
           localStorage.removeItem('user');
         }
-      } catch (error) {
-        console.error('❌ Failed to validate user:', error);
-        localStorage.removeItem('user');
-      } finally {
-        setLoading(false);
+      } else {
+        console.log('❌ No user in localStorage');
       }
+      setLoading(false);
     };
 
     loadUser();
   }, []);
 
-  // Редирект только после загрузки
+  // Редирект после загрузки
   useEffect(() => {
     if (!loading) {
       const isLoginPage = location.pathname.includes('/login');
+      console.log('📍 Current path:', location.pathname);
+      console.log('👤 User:', user?.username);
       
       if (!user && !isLoginPage) {
         console.log('🚫 No user, redirecting to login');
         navigate('/login');
       }
-      
-      // 👉 Убираем автоматический редирект с login на home
-      // Пусть пользователь сам решает, когда войти
     }
   }, [user, loading, navigate, location]);
 
