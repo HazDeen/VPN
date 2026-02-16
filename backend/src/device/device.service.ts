@@ -13,6 +13,23 @@ export class DeviceService {
     return `https://hvpn.io/${randomBytes(16).toString('base64url')}`;
   }
 
+  private async findUserByUsername(username: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { 
+        username: {
+          equals: username,
+          mode: 'insensitive',
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User @${username} not found`);
+    }
+
+    return user;
+  }
+
   async getUserDevices(userId: number) {
     this.logger.log(`📱 Getting devices for user ${userId}`);
     
@@ -22,7 +39,6 @@ export class DeviceService {
     });
 
     return devices.map(d => {
-      // Рассчитываем оставшиеся дни
       let daysLeft = 0;
       let isActive = d.isActive;
       
@@ -31,7 +47,6 @@ export class DeviceService {
         const diffTime = d.expiresAt.getTime() - now.getTime();
         daysLeft = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
         
-        // Если срок истек - деактивируем
         if (daysLeft === 0 && isActive) {
           this.deactivateDevice(d.id, userId).catch(e => 
             this.logger.error(`Failed to deactivate expired device: ${e.message}`)
@@ -54,10 +69,14 @@ export class DeviceService {
     });
   }
 
+  async getUserDevicesByUsername(username: string) {
+    const user = await this.findUserByUsername(username);
+    return this.getUserDevices(user.id);
+  }
+
   async addDevice(userId: number, dto: any) {
     this.logger.log(`➕ Adding device for user ${userId}: ${JSON.stringify(dto)}`);
     
-    // Проверяем лимит устройств
     const count = await this.prisma.device.count({ 
       where: { userId } 
     });
@@ -66,7 +85,6 @@ export class DeviceService {
       throw new BadRequestException('Максимум 5 устройств');
     }
 
-    // Проверяем баланс
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -81,13 +99,10 @@ export class DeviceService {
       );
     }
 
-    // Дата окончания подписки (+30 дней)
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
 
-    // Транзакция: создаём устройство, списываем деньги, записываем транзакцию
     const result = await this.prisma.$transaction(async (prisma) => {
-      // 1. Создаём устройство
       const device = await prisma.device.create({
         data: {
           userId,
@@ -100,7 +115,6 @@ export class DeviceService {
         },
       });
 
-      // 2. Списываем деньги
       const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: {
@@ -110,7 +124,6 @@ export class DeviceService {
         },
       });
 
-      // 3. Создаём транзакцию
       const transaction = await prisma.transaction.create({
         data: {
           userId,
@@ -126,7 +139,6 @@ export class DeviceService {
 
     this.logger.log(`✅ Device created with id: ${result.device.id}, expires: ${expiresAt}`);
     this.logger.log(`💰 New balance: ${result.updatedUser.balance}`);
-    this.logger.log(`📝 Transaction created: -${this.DEVICE_PRICE} ₽`);
 
     return {
       id: result.device.id,
@@ -137,6 +149,11 @@ export class DeviceService {
       daysLeft: 30,
       balance: result.updatedUser.balance,
     };
+  }
+
+  async addDeviceByUsername(username: string, dto: any) {
+    const user = await this.findUserByUsername(username);
+    return this.addDevice(user.id, dto);
   }
 
   async deactivateDevice(deviceId: number, userId: number) {
@@ -158,5 +175,10 @@ export class DeviceService {
     });
     
     return { success: true };
+  }
+
+  async deleteDeviceByUsername(deviceId: number, username: string) {
+    const user = await this.findUserByUsername(username);
+    return this.deleteDevice(deviceId, user.id);
   }
 }

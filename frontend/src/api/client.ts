@@ -1,8 +1,20 @@
 const API_URL = 'https://vpn-production-702c.up.railway.app';
 
+const getUsername = (): string => {
+  const user = localStorage.getItem('user');
+  if (user) {
+    const parsed = JSON.parse(user);
+    return parsed.username || '';
+  }
+  return '';
+};
+
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
+  const username = getUsername();
+  
   const headers = {
     'Content-Type': 'application/json',
+    'X-Username': username, // 👈 ПЕРЕДАЁМ USERNAME В ЗАГОЛОВКЕ
     ...options.headers,
   };
 

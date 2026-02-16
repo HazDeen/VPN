@@ -23,25 +23,17 @@ export default function TopUp() {
     }
 
     setLoading(true);
-    console.log('💰 Sending topup request:', amount); // 👈 ЛОГ!
-    
     try {
-      // ✅ ОТПРАВЛЯЕМ ЗАПРОС НА БЭКЕНД!
-      const result = await api.user.topUp(amount);
-      console.log('✅ Topup response:', result); // 👈 ЛОГ!
+      // ✅ API сам возьмёт username из заголовка
+      await api.user.topUp(amount);
       
-      toast.success(`✅ Баланс пополнен на ${amount} ₽`, {
-        icon: '💰',
-        duration: 3000,
-      });
+      toast.success(`✅ Баланс пополнен на ${amount} ₽`);
       
-      // Обновляем баланс
       await refetchBalance();
-      
       setTimeout(() => navigate('/'), 1500);
-    } catch (error) {
-      console.error('❌ Topup error:', error);
-      toast.error('❌ Ошибка пополнения');
+    } catch (error: any) {
+      console.error('Topup error:', error);
+      toast.error(error.message || '❌ Ошибка пополнения');
     } finally {
       setLoading(false);
     }
@@ -98,8 +90,7 @@ export default function TopUp() {
       </div>
 
       <div className="infoMessage">
-        <p>⚡ Реальная оплата</p>
-        <p className="small">Деньги зачисляются на баланс</p>
+        <p>💰 Пополнение баланса</p>
       </div>
 
       <button 
