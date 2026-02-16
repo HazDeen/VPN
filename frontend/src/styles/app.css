@@ -1990,6 +1990,60 @@ input:checked + .slider:before {
   }
 }
 
+/* Кнопка админ-панели */
+.adminButton {
+  width: 44px;
+  height: 44px;
+  border-radius: 30px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.adminButton:hover {
+  background: var(--accent-alpha);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.adminButton:active {
+  transform: scale(0.92);
+}
+
+.adminButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+[data-theme="light"] .adminButton {
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(60, 60, 67, 0.6);
+}
+
+[data-theme="light"] .adminButton:hover {
+  background: rgba(0, 122, 255, 0.1);
+  color: #007aff;
+  border-color: #007aff;
+}
+
+/* Маленький бейдж админа в приветствии */
+.adminBadgeSmall {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: var(--accent);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 30px;
+  vertical-align: middle;
+}
+
 /* -------------------------------------------- */
 /* 13. УТИЛИТЫ */
 /* -------------------------------------------- */
