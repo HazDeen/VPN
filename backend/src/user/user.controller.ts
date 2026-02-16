@@ -9,7 +9,8 @@ export class UserController {
 
   @Get('balance')
   async getBalance(@Req() req) {
-    const userId = req.user.id; // 👈 ID ИЗ ТОКЕНА!
+    console.log('🔥🔥🔥 USER ID:', req.user.id); // 👈 ПОСМОТРИМ, ЧТО ПРИХОДИТ
+    const userId = req.user.id;
     return this.userService.getBalance(userId);
   }
 
