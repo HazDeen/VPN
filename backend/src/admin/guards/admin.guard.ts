@@ -7,24 +7,40 @@ export class AdminGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers.authorization;
+    
+    // Получаем username из запроса (например, из заголовка или тела)
+    // В реальности пользователь должен быть уже авторизован через login-by-username
+    const username = request.headers['x-username'] || request.body?.username;
 
-    if (!authHeader) {
-      throw new UnauthorizedException('No authorization header');
+    if (!username) {
+      throw new UnauthorizedException('Username required');
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    
-    // Находим пользователя по токену (упрощённо)
+    // Ищем пользователя в БД
     const user = await this.prisma.user.findFirst({
-      where: { authToken: token },
+      where: { 
+        username: {
+          equals: username,
+          mode: 'insensitive',
+        },
+      },
     });
 
-    if (!user || !user.isAdmin) {
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (!user.isAdmin) {
       throw new UnauthorizedException('Admin access required');
     }
 
-    request.user = user;
+    // Добавляем пользователя в request для дальнейшего использования
+    request.user = {
+      id: user.id,
+      username: user.username,
+      isAdmin: user.isAdmin,
+    };
+
     return true;
   }
 }
