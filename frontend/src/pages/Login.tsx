@@ -21,7 +21,6 @@ export default function Login() {
     try {
       console.log('🔑 Вход по username:', username);
       
-      // Ищем пользователя в БД по username
       const response = await api.auth.loginByUsername(username);
       
       console.log('✅ Успешный вход:', response);

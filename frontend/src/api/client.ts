@@ -14,7 +14,7 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   
   const headers = {
     'Content-Type': 'application/json',
-    'X-Username': username, // 👈 ПЕРЕДАЁМ USERNAME В ЗАГОЛОВКЕ
+    'X-Username': username,
     ...options.headers,
   };
 
@@ -68,5 +68,18 @@ export const api = {
   },
   transactions: {
     getAll: () => apiFetch('/transactions'),
+  },
+  // 👇 ДОБАВЛЯЕМ АДМИН-МЕТОДЫ
+  admin: {
+    getAllUsers: () => apiFetch('/admin/users'),
+    getUserDevices: (userId: number) => apiFetch(`/admin/users/${userId}/devices`),
+    updateUserBalance: (userId: number, balance: number) => apiFetch(`/admin/users/${userId}/balance`, {
+      method: 'PUT',
+      body: JSON.stringify({ balance })
+    }),
+    setAdminStatus: (userId: number, isAdmin: boolean) => apiFetch(`/admin/users/${userId}/admin`, {
+      method: 'PUT',
+      body: JSON.stringify({ isAdmin })
+    }),
   },
 };
