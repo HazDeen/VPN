@@ -21,7 +21,6 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      // Парсим initData
       const params = new URLSearchParams(initData);
       const userStr = params.get('user');
       
@@ -32,12 +31,13 @@ export class AuthGuard implements CanActivate {
       const telegramUser = JSON.parse(userStr);
       const telegramId = BigInt(telegramUser.id);
 
-      // Ищем пользователя в БД
+      // Генерируем токен
+      const authToken = crypto.randomBytes(32).toString('hex');
+
       let user = await this.prisma.user.findUnique({
         where: { telegramId },
       });
 
-      // Если нет - создаём
       if (!user) {
         user = await this.prisma.user.create({
           data: {
@@ -45,12 +45,12 @@ export class AuthGuard implements CanActivate {
             firstName: telegramUser.first_name || '',
             lastName: telegramUser.last_name || '',
             username: telegramUser.username || '',
+            authToken, // 👈 ДОБАВЛЯЕМ ТОКЕН!
             balance: 0,
           },
         });
       }
 
-      // Добавляем пользователя в request
       request.user = {
         id: user.id,
         telegramId: Number(user.telegramId),
