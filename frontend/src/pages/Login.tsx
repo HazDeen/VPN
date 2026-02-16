@@ -29,7 +29,7 @@ export default function Login() {
       
       toast.success(`✅ Добро пожаловать, ${response.user.firstName || username}!`);
       
-      // 👉 ЖЁСТКАЯ ПЕРЕЗАГРУЗКА - ЭТО ТОЧНО СРАБОТАЕТ!
+      // 👉 ЖЁСТКАЯ ПЕРЕЗАГРУЗКА БЕЗ ЗАДЕРЖКИ
       window.location.href = '/VPN/#/';
       
     } catch (error: any) {

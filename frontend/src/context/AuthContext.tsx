@@ -26,39 +26,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Загружаем пользователя из localStorage при старте
   useEffect(() => {
-    const loadUser = () => {
-      const savedUser = localStorage.getItem('user');
-      console.log('📦 Loading user from localStorage:', savedUser);
-      
-      if (savedUser) {
-        try {
-          const parsedUser = JSON.parse(savedUser);
-          setUser(parsedUser);
-          console.log('✅ User loaded:', parsedUser.username);
-        } catch (e) {
-          console.error('❌ Failed to parse user:', e);
-          localStorage.removeItem('user');
-        }
-      } else {
-        console.log('❌ No user in localStorage');
+    const savedUser = localStorage.getItem('user');
+    console.log('📦 AuthProvider - localStorage:', savedUser);
+    
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        console.log('✅ User set:', parsedUser.username);
+      } catch (e) {
+        console.error('❌ Failed to parse user');
+        localStorage.removeItem('user');
       }
-      setLoading(false);
-    };
-
-    loadUser();
+    }
+    setLoading(false);
   }, []);
 
-  // Редирект после загрузки
   useEffect(() => {
     if (!loading) {
       const isLoginPage = location.pathname.includes('/login');
-      console.log('📍 Current path:', location.pathname);
-      console.log('👤 User:', user?.username);
+      console.log('📍 Path:', location.pathname, 'User:', user?.username);
       
       if (!user && !isLoginPage) {
-        console.log('🚫 No user, redirecting to login');
+        console.log('🚫 Redirecting to login');
         navigate('/login');
       }
     }
