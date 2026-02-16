@@ -74,4 +74,41 @@ async topUpBalance(userId: number, amount: number) {
     balance: updatedUser.balance,
   };
 }
+
+async getProfile(userId: number) {
+  this.logger.log(`👤 Getting profile for user ${userId}`);
+  
+  const user = await this.prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      devices: {
+        orderBy: { connectedAt: 'desc' },
+      },
+    },
+  });
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  return {
+    id: user.id,
+    telegramId: Number(user.telegramId),
+    firstName: user.firstName,
+    lastName: user.lastName,
+    username: user.username,
+    balance: user.balance,
+    devices: user.devices.map(d => ({
+      id: d.id,
+      name: d.customName || d.name,
+      model: d.name,
+      type: d.type,
+      date: d.connectedAt,
+      isActive: d.isActive,
+      configLink: d.configLink,
+      daysLeft: d.expiresAt ? Math.max(0, Math.ceil((d.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0,
+    })),
+  };
+}
+
 }

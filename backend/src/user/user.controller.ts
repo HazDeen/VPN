@@ -1,22 +1,27 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Req, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
+import { AuthGuard } from '../auth/guards/auth.guard'; // создадим ниже
 
 @Controller('user')
+@UseGuards(AuthGuard) // 👈 ЗАЩИТА
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('balance')
-  async getBalance() {
-    const result = await this.userService.getBalance(1);
-    console.log('🔍 getBalance result:', result);
-    return result;
+  async getBalance(@Req() req) {
+    const userId = req.user.id; // 👈 ID ИЗ ТОКЕНА!
+    return this.userService.getBalance(userId);
+  }
+
+  @Get('profile')
+  async getProfile(@Req() req) {
+    const userId = req.user.id;
+    return this.userService.getProfile(userId);
   }
 
   @Post('topup')
-  async topUp(@Body() body: { amount: number }) {
-    console.log('💰 topUp request:', body);
-    const result = await this.userService.topUpBalance(1, body.amount);
-    console.log('✅ topUp result:', result);
-    return result;
+  async topUp(@Req() req, @Body() body: { amount: number }) {
+    const userId = req.user.id;
+    return this.userService.topUpBalance(userId, body.amount);
   }
 }

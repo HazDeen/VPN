@@ -1,13 +1,14 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
+import { AuthGuard } from '../auth/guards/auth.guard';
 
 @Controller('transactions')
+@UseGuards(AuthGuard)
 export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
 
   @Get()
-  async getUserTransactions() {
-    // ✅ ВРЕМЕННО ХАРДКОДИМ userId = 1
-    return this.transactionService.getUserTransactions(1);
+  async getUserTransactions(@Req() req) {
+    return this.transactionService.getUserTransactions(req.user.id);
   }
 }
