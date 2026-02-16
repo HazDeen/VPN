@@ -6,11 +6,26 @@ import * as crypto from 'crypto';
 export class AuthService {
   constructor(private prisma: PrismaService) {}
 
-  private generateAuthToken(): { token: string; expiresAt: Date } {
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24); // +24 часа
-    return { token, expiresAt };
+  async findByToken(token: string) {
+    console.log(`🔍 Searching for token: ${token}`);
+    
+    const user = await this.prisma.user.findUnique({
+      where: { authToken: token },
+    });
+
+    if (!user) {
+      console.log('❌ User not found for token');
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    // Проверяем, не истёк ли токен
+    if (user.tokenExpires && user.tokenExpires < new Date()) {
+      console.log('❌ Token expired');
+      throw new UnauthorizedException('Token expired');
+    }
+
+    console.log(`✅ User found: ${user.id}`);
+    return user;
   }
 
   async findOrCreateUser(telegramData: any) {
@@ -51,21 +66,11 @@ export class AuthService {
     return user;
   }
 
-  async findByToken(token: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { authToken: token },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('Invalid token');
-    }
-
-    // Проверяем, не истёк ли токен
-    if (user.tokenExpires && user.tokenExpires < new Date()) {
-      throw new UnauthorizedException('Token expired');
-    }
-
-    return user;
+  private generateAuthToken(): { token: string; expiresAt: Date } {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+    return { token, expiresAt };
   }
 
   async refreshToken(userId: number) {

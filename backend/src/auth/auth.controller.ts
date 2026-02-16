@@ -7,6 +7,8 @@ export class AuthController {
 
   @Get('token')
   async loginWithToken(@Query('token') token: string) {
+    console.log(`📥 Login attempt with token: ${token}`);
+    
     if (!token) {
       throw new UnauthorizedException('Token required');
     }
