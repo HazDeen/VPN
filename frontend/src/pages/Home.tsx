@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useBalance } from '../hooks/useBalance';
 import { useDevices } from '../hooks/useDevices';
-import { useAuth } from '../context/AuthContext';
 import BalanceCard from "../components/BalanceCard";
 import DevicesCard from "../components/DevicesCard";
 import ActionButtons from "../components/ActionButtons";
@@ -15,7 +14,6 @@ export default function Home() {
   const [showAddModal, setShowAddModal] = useState(false);
   const { addDevice } = useDevices();
   const { refetch: refetchBalance } = useBalance();
-  const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   const handleAddDevice = async (name: string, type: DeviceType, customName: string) => {
@@ -36,13 +34,7 @@ export default function Home() {
           {theme === 'dark' ? <Sun size={22} /> : <Moon size={22} />}
         </button>
       </div>
-      
-      {user && (
-        <div className="welcomeMessage">
-          👋 Привет, {user.firstName || 'пользователь'}!
-        </div>
-      )}
-      
+       
       <BalanceCard />
       
       <ActionButtons />
