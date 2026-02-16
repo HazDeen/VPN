@@ -1,103 +1,89 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { toast } from 'sonner';
+import { LogIn } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // Получаем initData из Telegram
-    // @ts-ignore
-    const initData = window.Telegram?.WebApp?.initData || window.Telegram?.WebView?.initParams?.tgWebAppData;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    console.log('📦 initData:', initData);
-    
-    if (!initData) {
-      setError('Это приложение должно работать внутри Telegram');
-      setLoading(false);
+    if (!username.trim()) {
+      toast.error('Введите username');
       return;
     }
 
-    // Парсим initData
-    const params = new URLSearchParams(initData);
-    const userStr = params.get('user');
-    
-    if (!userStr) {
-      setError('Не удалось получить данные пользователя');
-      setLoading(false);
-      return;
-    }
-
+    setLoading(true);
     try {
-      const userData = JSON.parse(userStr);
-      const telegramId = userData.id;
+      console.log('🔑 Вход по username:', username);
       
-      console.log('✅ Telegram ID:', telegramId);
-      console.log('✅ User data:', userData);
-      
-      handleLogin(telegramId);
-    } catch (e) {
-      setError('Ошибка обработки данных Telegram');
-      setLoading(false);
-    }
-  }, []);
-
-  const handleLogin = async (telegramId: number) => {
-    try {
-      console.log('🔑 Вход по Telegram ID:', telegramId);
-      
-      const response = await api.auth.telegramId(telegramId);
+      // Ищем пользователя в БД по username
+      const response = await api.auth.loginByUsername(username);
       
       console.log('✅ Успешный вход:', response);
       
       localStorage.setItem('user', JSON.stringify(response.user));
-      toast.success(`✅ Добро пожаловать, ${response.user.firstName || 'пользователь'}!`);
+      toast.success(`✅ Добро пожаловать, ${response.user.firstName || username}!`);
       navigate('/');
       
     } catch (error: any) {
       console.error('❌ Ошибка входа:', error);
-      setError(error.message || 'Пользователь не найден. Напишите /start боту.');
-      toast.error('❌ Ошибка входа');
+      toast.error(error.message || 'Пользователь не найден. Напишите /start боту');
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="loginPage">
-        <div className="loginContainer">
-          <div className="loginCard">
-            <p>Вход через Telegram...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="loginPage">
-        <div className="loginContainer">
-          <h1 className="loginTitle">VPN Mini App</h1>
-          <div className="loginCard">
-            <div className="errorBox">
-              <p>❌ {error}</p>
-              <button 
-                className="retryButton"
-                onClick={() => window.location.href = 'https://t.me/banana_vpnihe_bot'}
-              >
-                🔄 Открыть бота
-              </button>
+  return (
+    <div className="loginPage">
+      <div className="loginContainer">
+        <h1 className="loginTitle">VPN Mini App</h1>
+        
+        <div className="loginCard">
+          <p className="loginDescription">
+            Введите ваш Telegram username, чтобы войти в аккаунт
+          </p>
+          
+          <form onSubmit={handleSubmit}>
+            <div className="inputGroup">
+              <input
+                type="text"
+                className="loginInput"
+                placeholder="@username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.replace('@', ''))}
+                disabled={loading}
+                autoFocus
+              />
             </div>
+            
+            <button 
+              type="submit"
+              className="loginButton"
+              disabled={loading}
+            >
+              <LogIn size={20} />
+              {loading ? 'Вход...' : 'Войти'}
+            </button>
+          </form>
+          
+          <div className="loginFooter">
+            <p>Нет аккаунта? Напишите боту:</p>
+            <a 
+              href="https://t.me/banana_vpnihe_bot" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="botLink"
+            >
+              @banana_vpnihe_bot
+            </a>
           </div>
         </div>
       </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 }

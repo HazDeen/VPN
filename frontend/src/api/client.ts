@@ -31,9 +31,9 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
 
 export const api = {
   auth: {
-    telegramId: (telegramId: number) => apiFetch('/auth/telegram-id', {
+    loginByUsername: (username: string) => apiFetch('/auth/login-by-username', {
       method: 'POST',
-      body: JSON.stringify({ telegramId })
+      body: JSON.stringify({ username })
     }),
   },
   user: {
