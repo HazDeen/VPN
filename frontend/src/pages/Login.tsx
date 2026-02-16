@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const token = searchParams.get('token');
+    // Парсим токен из hash
+    const hash = window.location.hash; // "#/login?token=..."
+    const search = hash.split('?')[1];
+    const params = new URLSearchParams(search);
+    const token = params.get('token');
+    
+    console.log('🔍 Hash:', hash);
+    console.log('🔍 Token from URL:', token);
     
     if (!token) {
       setError('Отсутствует токен авторизации');
@@ -17,14 +23,13 @@ export default function Login() {
       return;
     }
 
-    console.log('🔑 Получен токен:', token);
     localStorage.setItem('authToken', token);
     handleLogin(token);
   }, []);
 
   const handleLogin = async (token: string) => {
     try {
-      console.log('🔑 Отправка токена на бэкенд...');
+      console.log('🔑 Отправка токена на бэкенд:', token);
       
       const response = await fetch(`https://vpn-production-702c.up.railway.app/auth/token?token=${token}`);
       const data = await response.json();
@@ -37,8 +42,6 @@ export default function Login() {
       
       localStorage.setItem('user', JSON.stringify(data.user));
       toast.success(`✅ Добро пожаловать, ${data.user.firstName || 'пользователь'}!`);
-      
-      // Перенаправляем на главную
       navigate('/');
       
     } catch (error) {

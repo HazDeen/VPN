@@ -2,7 +2,7 @@ const API_URL = 'https://vpn-production-702c.up.railway.app';
 
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const token = localStorage.getItem('authToken');
-  
+  console.log('📤 Sending token:', token);
   const headers = {
     'Content-Type': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` }),
