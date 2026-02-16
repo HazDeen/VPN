@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../api/client';
 
 interface User {
   id: number;
@@ -25,38 +24,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const loadUser = async () => {
-    const token = localStorage.getItem('authToken');
-    
-    if (!token) {
-      navigate('/login');
+  const loadUser = () => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
       setLoading(false);
-      return;
-    }
-
-    try {
-      console.log('🔍 Loading user profile...');
-      const profile = await api.user.getProfile();
-      console.log('✅ Profile loaded:', profile);
-      setUser(profile);
-    } catch (error) {
-      console.error('❌ Failed to load user:', error);
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
+    } else {
       navigate('/login');
-    } finally {
       setLoading(false);
     }
   };
 
   const updateBalance = (newBalance: number) => {
     if (user) {
-      setUser({ ...user, balance: newBalance });
+      const updated = { ...user, balance: newBalance };
+      setUser(updated);
+      localStorage.setItem('user', JSON.stringify(updated));
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     navigate('/login');
   };

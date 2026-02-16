@@ -1,11 +1,8 @@
 const API_URL = 'https://vpn-production-702c.up.railway.app';
 
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('authToken');
-  console.log('📤 Sending token:', token);
   const headers = {
     'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
     ...options.headers,
   };
 
@@ -18,12 +15,6 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     const data = await response.json();
 
     if (!response.ok) {
-      if (response.status === 401) {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        window.location.href = '/VPN/login?expired=true';
-      }
-      
       throw {
         status: response.status,
         message: data.message || 'API Error',
@@ -40,7 +31,10 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
 
 export const api = {
   auth: {
-    token: (token: string) => fetch(`${API_URL}/auth/token?token=${token}`).then(res => res.json()),
+    telegramId: (telegramId: number) => apiFetch('/auth/telegram-id', {
+      method: 'POST',
+      body: JSON.stringify({ telegramId })
+    }),
   },
   user: {
     getBalance: () => apiFetch('/user/balance'),

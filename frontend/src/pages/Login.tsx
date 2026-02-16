@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../api/client';
 import { toast } from 'sonner';
 
 export default function Login() {
@@ -8,45 +9,57 @@ export default function Login() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Парсим токен из hash
-    const hash = window.location.hash; // "#/login?token=..."
-    const search = hash.split('?')[1];
-    const params = new URLSearchParams(search);
-    const token = params.get('token');
+    // Получаем initData из Telegram
+    // @ts-ignore
+    const initData = window.Telegram?.WebApp?.initData || window.Telegram?.WebView?.initParams?.tgWebAppData;
     
-    console.log('🔍 Hash:', hash);
-    console.log('🔍 Token from URL:', token);
+    console.log('📦 initData:', initData);
     
-    if (!token) {
-      setError('Отсутствует токен авторизации');
+    if (!initData) {
+      setError('Это приложение должно работать внутри Telegram');
       setLoading(false);
       return;
     }
 
-    localStorage.setItem('authToken', token);
-    handleLogin(token);
+    // Парсим initData
+    const params = new URLSearchParams(initData);
+    const userStr = params.get('user');
+    
+    if (!userStr) {
+      setError('Не удалось получить данные пользователя');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const userData = JSON.parse(userStr);
+      const telegramId = userData.id;
+      
+      console.log('✅ Telegram ID:', telegramId);
+      console.log('✅ User data:', userData);
+      
+      handleLogin(telegramId);
+    } catch (e) {
+      setError('Ошибка обработки данных Telegram');
+      setLoading(false);
+    }
   }, []);
 
-  const handleLogin = async (token: string) => {
+  const handleLogin = async (telegramId: number) => {
     try {
-      console.log('🔑 Отправка токена на бэкенд:', token);
+      console.log('🔑 Вход по Telegram ID:', telegramId);
       
-      const response = await fetch(`https://vpn-production-702c.up.railway.app/auth/token?token=${token}`);
-      const data = await response.json();
+      const response = await api.auth.telegramId(telegramId);
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      console.log('✅ Успешный вход:', data);
+      console.log('✅ Успешный вход:', response);
       
-      localStorage.setItem('user', JSON.stringify(data.user));
-      toast.success(`✅ Добро пожаловать, ${data.user.firstName || 'пользователь'}!`);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      toast.success(`✅ Добро пожаловать, ${response.user.firstName || 'пользователь'}!`);
       navigate('/');
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Ошибка входа:', error);
-      setError('Ошибка входа. Попробуйте снова.');
+      setError(error.message || 'Пользователь не найден. Напишите /start боту.');
       toast.error('❌ Ошибка входа');
     } finally {
       setLoading(false);
@@ -58,7 +71,7 @@ export default function Login() {
       <div className="loginPage">
         <div className="loginContainer">
           <div className="loginCard">
-            <p>Вход в аккаунт...</p>
+            <p>Вход через Telegram...</p>
           </div>
         </div>
       </div>
@@ -77,7 +90,7 @@ export default function Login() {
                 className="retryButton"
                 onClick={() => window.location.href = 'https://t.me/banana_vpnihe_bot'}
               >
-                🔄 Получить новую ссылку
+                🔄 Открыть бота
               </button>
             </div>
           </div>
