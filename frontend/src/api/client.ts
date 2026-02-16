@@ -1,11 +1,8 @@
 const API_URL = 'https://vpn-production-702c.up.railway.app';
 
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('authToken');
-  
   const headers = {
     'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
     ...options.headers,
   };
 
@@ -18,12 +15,6 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     const data = await response.json();
 
     if (!response.ok) {
-      if (response.status === 401) {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        window.location.href = '/VPN/#/login';
-      }
-      
       throw {
         status: response.status,
         message: data.message || 'API Error',
@@ -65,18 +56,5 @@ export const api = {
   },
   transactions: {
     getAll: () => apiFetch('/transactions'),
-  },
-  // 👇 НОВЫЕ АДМИН-МЕТОДЫ
-  admin: {
-    getAllUsers: () => apiFetch('/admin/users'),
-    getUserDevices: (userId: number) => apiFetch(`/admin/users/${userId}/devices`),
-    updateUserBalance: (userId: number, balance: number) => apiFetch(`/admin/users/${userId}/balance`, {
-      method: 'PUT',
-      body: JSON.stringify({ balance })
-    }),
-    setAdminStatus: (userId: number, isAdmin: boolean) => apiFetch(`/admin/users/${userId}/admin`, {
-      method: 'PUT',
-      body: JSON.stringify({ isAdmin })
-    }),
   },
 };

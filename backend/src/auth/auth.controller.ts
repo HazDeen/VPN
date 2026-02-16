@@ -24,6 +24,7 @@ export class AuthController {
         lastName: user.lastName,
         username: user.username,
         balance: user.balance,
+        isAdmin: user.isAdmin,
       },
     };
   }

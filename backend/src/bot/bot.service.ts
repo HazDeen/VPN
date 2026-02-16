@@ -66,7 +66,7 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
             lastName,
             username,
             balance: 0,
-            isAdmin: false, // по умолчанию не админ
+            isAdmin: false,
           },
         });
 
@@ -118,7 +118,6 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
           return;
         }
 
-        // Ссылка на админ-панель
         const adminUrl = 'https://hazdeen.github.io/VPN/#/admin';
         
         await ctx.reply(
