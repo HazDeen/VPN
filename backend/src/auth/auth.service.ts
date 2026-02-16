@@ -1,9 +1,17 @@
-import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common'; // 👈 ДОБАВИЛИ UnauthorizedException
+import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService) {}
+
+  private generateAuthToken(): { token: string; expiresAt: Date } {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24); // +24 часа
+    return { token, expiresAt };
+  }
 
   async findOrCreateUser(telegramData: any) {
     const telegramId = BigInt(telegramData.id);
@@ -13,8 +21,7 @@ export class AuthService {
     });
 
     if (!user) {
-      // Генерируем токен
-      const authToken = require('crypto').randomBytes(32).toString('hex');
+      const { token, expiresAt } = this.generateAuthToken();
       
       user = await this.prisma.user.create({
         data: {
@@ -22,10 +29,23 @@ export class AuthService {
           firstName: telegramData.first_name || '',
           lastName: telegramData.last_name || '',
           username: telegramData.username || '',
-          authToken, // 👈 ОБЯЗАТЕЛЬНО ДОБАВЛЯЕМ!
+          authToken: token,
+          tokenExpires: expiresAt,
           balance: 0,
         },
       });
+    } else {
+      // Если токен истёк или его нет - обновляем
+      if (!user.authToken || !user.tokenExpires || user.tokenExpires < new Date()) {
+        const { token, expiresAt } = this.generateAuthToken();
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            authToken: token,
+            tokenExpires: expiresAt,
+          },
+        });
+      }
     }
 
     return user;
@@ -40,7 +60,29 @@ export class AuthService {
       throw new UnauthorizedException('Invalid token');
     }
 
+    // Проверяем, не истёк ли токен
+    if (user.tokenExpires && user.tokenExpires < new Date()) {
+      throw new UnauthorizedException('Token expired');
+    }
+
     return user;
+  }
+
+  async refreshToken(userId: number) {
+    const { token, expiresAt } = this.generateAuthToken();
+    
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        authToken: token,
+        tokenExpires: expiresAt,
+      },
+    });
+
+    return {
+      token: user.authToken,
+      expiresAt: user.tokenExpires,
+    };
   }
 
   async getMe(userId: number) {

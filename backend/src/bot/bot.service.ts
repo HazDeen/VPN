@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/commo
 import { Telegraf } from 'telegraf';
 import { PrismaService } from '../prisma/prisma.service';
 import { randomBytes } from 'crypto';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class BotService implements OnModuleInit, OnModuleDestroy {
@@ -79,10 +80,7 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
   }
 
   private registerCommands() {
-    // ==========================================
-    // КОМАНДА /start - СОЗДАЁТ ПОЛЬЗОВАТЕЛЯ И ТОКЕН
-    // ==========================================
-    // КОМАНДА /start - СОЗДАЁТ ПОЛЬЗОВАТЕЛЯ И ТОКЕН
+    // КОМАНДА /start
 this.bot.command('start', async (ctx) => {
   try {
     const telegramId = ctx.from.id;
@@ -92,37 +90,51 @@ this.bot.command('start', async (ctx) => {
 
     this.logger.log(`📥 /start от @${username} (${telegramId})`);
 
-    // Генерируем уникальный токен
-    const authToken = this.generateAuthToken();
-
-    // СОЗДАЁМ ИЛИ ОБНОВЛЯЕМ ПОЛЬЗОВАТЕЛЯ
-    const user = await this.prisma.user.upsert({
+    // Ищем пользователя
+    let user = await this.prisma.user.findUnique({
       where: { telegramId: BigInt(telegramId) },
-      update: {
-        firstName,
-        lastName,
-        username,
-        authToken,
-      },
-      create: {
-        telegramId: BigInt(telegramId),
-        firstName,
-        lastName,
-        username,
-        authToken,
-        balance: 0,
-      },
     });
 
-    this.logger.log(`✅ Пользователь ${user.id} создан/обновлён`);
+    // Генерируем новый токен (всегда обновляем при /start)
+    const authToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpires = new Date();
+    tokenExpires.setHours(tokenExpires.getHours() + 24);
 
-    // 👇 ИСПРАВЛЕННАЯ ССЫЛКА С #/
+    if (!user) {
+      // Создаём нового
+      user = await this.prisma.user.create({
+        data: {
+          telegramId: BigInt(telegramId),
+          firstName,
+          lastName,
+          username,
+          authToken,
+          tokenExpires,
+          balance: 0,
+        },
+      });
+    } else {
+      // Обновляем токен у существующего
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          firstName,
+          lastName,
+          username,
+          authToken,
+          tokenExpires,
+        },
+      });
+    }
+
+    this.logger.log(`✅ Пользователь ${user.id} обновлён, токен действителен до ${tokenExpires}`);
+
     const loginUrl = `https://hazdeen.github.io/VPN/#/login?token=${authToken}`;
 
     await ctx.reply(
       `🎉 Добро пожаловать, ${firstName}!\n\n` +
       `💰 Твой баланс: ${user.balance} ₽\n` +
-      `🔑 Твоя персональная ссылка для входа:\n${loginUrl}\n\n` +
+      `🔑 Твоя персональная ссылка для входа (действительна 24 часа):\n${loginUrl}\n\n` +
       `🚀 Перейди по ней, чтобы открыть Mini App`,
       {
         reply_markup: {
@@ -141,7 +153,6 @@ this.bot.command('start', async (ctx) => {
     await ctx.reply('⚠️ Произошла ошибка. Попробуй позже.');
   }
 });
-
     // ==========================================
     // КОМАНДА /balance - ПРОВЕРКА БАЛАНСА
     // ==========================================

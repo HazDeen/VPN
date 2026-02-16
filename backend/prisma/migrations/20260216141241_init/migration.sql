@@ -7,6 +7,7 @@ CREATE TABLE "users" (
     "username" TEXT,
     "balance" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "authToken" TEXT NOT NULL,
+    "tokenExpires" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
