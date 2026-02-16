@@ -1,16 +1,28 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
-import { AuthGuard } from './guards/auth.guard';
+import { Controller, Get, Query, UnauthorizedException } from '@nestjs/common';
+import { AuthService } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor() {}
+  constructor(private readonly authService: AuthService) {}
 
-  @Get('me')
-  @UseGuards(AuthGuard)
-  async getMe(@Req() req) {
+  @Get('token')
+  async loginWithToken(@Query('token') token: string) {
+    if (!token) {
+      throw new UnauthorizedException('Token required');
+    }
+    
+    const user = await this.authService.findByToken(token);
+    
     return {
       success: true,
-      user: req.user,
+      user: {
+        id: user.id,
+        telegramId: Number(user.telegramId),
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+        balance: user.balance,
+      },
     };
   }
 }

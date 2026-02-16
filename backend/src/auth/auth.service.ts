@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common'; // 👈 ДОБАВИЛИ UnauthorizedException
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -13,12 +13,16 @@ export class AuthService {
     });
 
     if (!user) {
+      // Генерируем токен
+      const authToken = require('crypto').randomBytes(32).toString('hex');
+      
       user = await this.prisma.user.create({
         data: {
           telegramId,
           firstName: telegramData.first_name || '',
           lastName: telegramData.last_name || '',
           username: telegramData.username || '',
+          authToken, // 👈 ОБЯЗАТЕЛЬНО ДОБАВЛЯЕМ!
           balance: 0,
         },
       });
@@ -27,9 +31,21 @@ export class AuthService {
     return user;
   }
 
-  async getMe(userId: number) { // 👈 ЗДЕСЬ ДОЛЖЕН БЫТЬ NUMBER, НЕ BIGINT!
+  async findByToken(token: string) {
     const user = await this.prisma.user.findUnique({
-      where: { id: userId }, // id в БД - Int, передаём number
+      where: { authToken: token },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    return user;
+  }
+
+  async getMe(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
     });
 
     if (!user) {
