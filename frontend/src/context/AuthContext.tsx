@@ -26,21 +26,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Загружаем пользователя при старте
   useEffect(() => {
-    // Загружаем пользователя из localStorage при старте
     const loadUser = () => {
       const savedUser = localStorage.getItem('user');
       if (savedUser) {
         try {
           const parsedUser = JSON.parse(savedUser);
           setUser(parsedUser);
-          console.log('✅ User loaded from localStorage:', parsedUser.username);
+          console.log('✅ User loaded:', parsedUser.username);
         } catch (e) {
-          console.error('Failed to parse user from localStorage');
+          console.error('Failed to parse user');
           localStorage.removeItem('user');
         }
-      } else {
-        console.log('ℹ️ No user in localStorage');
       }
       setLoading(false);
     };
@@ -48,7 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     loadUser();
   }, []);
 
-  // Редирект только после загрузки и если нет пользователя
+  // Редирект только если нет пользователя и мы не на логине
   useEffect(() => {
     if (!loading) {
       const isLoginPage = location.pathname.includes('/login');
@@ -56,11 +54,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!user && !isLoginPage) {
         console.log('🚫 No user, redirecting to login');
         navigate('/login');
-      }
-      
-      if (user && isLoginPage) {
-        console.log('✅ User exists, redirecting to home');
-        navigate('/');
       }
     }
   }, [user, loading, navigate, location]);

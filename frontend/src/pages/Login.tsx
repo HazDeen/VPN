@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { toast } from 'sonner';
 import { LogIn } from 'lucide-react';
 
 export default function Login() {
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -26,8 +28,8 @@ export default function Login() {
       localStorage.setItem('user', JSON.stringify(response.user));
       toast.success(`✅ Добро пожаловать, ${response.user.firstName || username}!`);
       
-      // 👇 ВАЖНО: перезагружаем страницу, чтобы все хуки обновились
-      window.location.href = '/VPN/#/';
+      // 👉 Просто переходим на главную, без перезагрузки
+      navigate('/');
       
     } catch (error: any) {
       console.error('❌ Ошибка входа:', error);
