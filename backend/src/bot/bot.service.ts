@@ -27,15 +27,18 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
 
       this.registerCommands();
 
-      await this.bot.launch({
+      // Запускаем бота без await, чтобы не блокировать сервер
+      this.bot.launch({
         dropPendingUpdates: true,
+      }).then(() => {
+        this.logger.log('✅ Бот успешно запущен!');
+      }).catch((error) => {
+        this.logger.error(`❌ Ошибка запуска бота: ${error.message}`);
       });
-      
-      this.logger.log('✅ Бот успешно запущен!');
       
     } catch (error) {
       const err = error as Error;
-      this.logger.error(`❌ Ошибка запуска бота: ${err.message}`);
+      this.logger.error(`❌ Критическая ошибка: ${err.message}`);
     }
   }
 
@@ -138,6 +141,62 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
         const err = error as Error;
         this.logger.error(`❌ Ошибка /admin: ${err.message}`);
       }
+    });
+
+    // ==========================================
+    // КОМАНДА /balance - ПРОВЕРКА БАЛАНСА (ОПЦИОНАЛЬНО)
+    // ==========================================
+    this.bot.command('balance', async (ctx) => {
+      try {
+        const telegramId = ctx.from.id;
+        
+        const user = await this.prisma.user.findUnique({
+          where: { telegramId: BigInt(telegramId) },
+        });
+
+        if (!user) {
+          await ctx.reply('❌ Ты ещё не зарегистрирован. Напиши /start');
+          return;
+        }
+
+        const activeDevices = await this.prisma.device.count({
+          where: {
+            userId: user.id,
+            isActive: true,
+          },
+        });
+
+        const dailyRate = activeDevices * 10;
+        const daysLeft = dailyRate > 0 ? Math.floor(Number(user.balance) / dailyRate) : 30;
+
+        await ctx.reply(
+          `💰 Твой баланс: ${user.balance} ₽\n` +
+          `📱 Активных устройств: ${activeDevices}\n` +
+          `⏳ Хватит на ~${daysLeft > 30 ? 30 : daysLeft} дней`
+        );
+      } catch (error) {
+        const err = error as Error;
+        this.logger.error(`❌ Ошибка /balance: ${err.message}`);
+      }
+    });
+
+    // ==========================================
+    // КОМАНДА /help - СПРАВКА
+    // ==========================================
+    this.bot.command('help', async (ctx) => {
+      await ctx.reply(
+        `📚 Доступные команды:\n\n` +
+        `/start - Начать работу\n` +
+        `/balance - Проверить баланс\n` +
+        `/admin - Админ-панель (только для админов)\n` +
+        `/help - Показать это сообщение`
+      );
+    });
+
+    // Обработчик текстовых сообщений
+    this.bot.on('text', async (ctx) => {
+      if (ctx.message.text.startsWith('/')) return;
+      await ctx.reply('Используй /help для списка команд');
     });
   }
 
