@@ -1220,13 +1220,8 @@ body {
 /* 9. TOAST УВЕДОМЛЕНИЯ */
 /* -------------------------------------------- */
 .sonner-toast {
-  background: var(--bg-secondary) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: 16px !important;
-  box-shadow: var(--shadow) !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-  backdrop-filter: blur(10px) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .deleteConfirmCard {
@@ -1242,6 +1237,11 @@ body {
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
   margin: 0 auto;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
 }
 
 .deleteConfirmIcon {
@@ -2196,6 +2196,7 @@ input:checked + .slider:before {
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
+  max-width: 250px; 
 }
 
 .deviceNameEdit input {
@@ -2208,12 +2209,13 @@ input:checked + .slider:before {
   font-size: 16px;
   font-weight: 600;
   outline: none;
+  width: 160px;
 }
 
 .saveNameBtn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   border: none;
   background: var(--success);
   color: white;
@@ -2222,6 +2224,7 @@ input:checked + .slider:before {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .saveNameBtn:active {
@@ -2490,5 +2493,325 @@ input:checked + .slider:before {
   .actionBtn {
     width: auto;
     padding: 10px 16px;
+  }
+
+  .deviceNameEdit {
+    max-width: 200px;
+  }
+  
+  .deviceNameEdit input {
+    width: 140px;
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+  
+  .saveNameBtn {
+    width: 34px;
+    height: 34px;
+  }
+  
+  .deleteConfirmCard {
+    width: 90vw;
+    padding: 20px;
+  }
+}
+
+/* Конфигурация с кнопками */
+.configActions {
+  display: flex;
+  gap: 10px;
+}
+
+.copyLinkBtn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border-accent);
+  background: var(--accent-alpha);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copyLinkBtn.copied {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+.copyLinkBtn:active {
+  transform: scale(0.98);
+}
+
+.replaceLinkBtn {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  border: 1px solid var(--border-accent);
+  background: var(--accent-alpha);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.replaceLinkBtn:active {
+  transform: scale(0.95);
+  background: var(--accent-alpha);
+}
+
+/* Карточка удаления */
+.deleteCard {
+  background: linear-gradient(145deg, var(--bg-block), rgba(255, 77, 77, 0.05));
+  border: 1px solid rgba(255, 77, 77, 0.2);
+  border-radius: 24px;
+  padding: 20px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deleteCard:active {
+  transform: scale(0.98);
+  background: rgba(255, 77, 77, 0.1);
+}
+
+.deleteCardIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  background: rgba(255, 77, 77, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--danger);
+  flex-shrink: 0;
+}
+
+.deleteCardContent {
+  flex: 1;
+}
+
+.deleteCardContent h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--danger);
+  margin-bottom: 4px;
+}
+
+.deleteCardContent p {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Редактирование имени */
+.editNameBtn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+}
+
+.editNameBtn:active {
+  transform: scale(0.9);
+  background: var(--accent-alpha);
+  color: var(--accent);
+}
+
+.deviceNameEdit input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 16px;
+  border: 1.5px solid var(--accent);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  outline: none;
+}
+
+.saveNameBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: none;
+  background: var(--success);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.saveNameBtn:active {
+  transform: scale(0.9);
+}
+
+/* ====== СТАТУС И ДНИ - АДАПТАЦИЯ ====== */
+.deviceProfileStatus {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap; /* 👈 РАЗРЕШАЕМ ПЕРЕНОС */
+}
+
+.statusBadge {
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--bg-card);
+  white-space: nowrap;
+}
+
+.statusBadge.active {
+  background: rgba(52, 199, 89, 0.15);
+  color: var(--success);
+}
+
+.statusBadge.inactive {
+  background: rgba(142, 142, 147, 0.15);
+  color: var(--text-secondary);
+}
+
+.daysBadge {
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(51, 144, 255, 0.15);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* 📱 Адаптация для маленьких экранов */
+@media (max-width: 380px) {
+  .deviceProfileStatus {
+    gap: 8px;
+  }
+  
+  .statusBadge {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+  
+  .daysBadge {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+}
+
+/* 📱 Для совсем крошечных */
+@media (max-width: 340px) {
+  .deviceProfileStatus {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  
+  .statusBadge,
+  .daysBadge {
+    padding: 3px 8px;
+    font-size: 10px;
+  }
+}
+
+/* ====== СТАТУС И ДНИ - БЕЗ ПЕРЕНОСА ====== */
+.deviceProfileStatus {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: nowrap; /* 👈 ЗАПРЕЩАЕМ ПЕРЕНОС */
+  overflow-x: auto; /* 👈 ПОЗВОЛЯЕМ СКРОЛЛИТЬ, ЕСЛИ СЛИШКОМ УЗКО */
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px; /* для красоты */
+}
+
+.statusBadge {
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--bg-card);
+  white-space: nowrap; /* 👈 ЗАПРЕЩАЕМ ПЕРЕНОС */
+  flex-shrink: 0; /* 👈 ЗАПРЕЩАЕМ СЖИМАТЬСЯ */
+}
+
+.statusBadge.active {
+  background: rgba(52, 199, 89, 0.15);
+  color: var(--success);
+}
+
+.statusBadge.inactive {
+  background: rgba(142, 142, 147, 0.15);
+  color: var(--text-secondary);
+}
+
+.daysBadge {
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(51, 144, 255, 0.15);
+  color: var(--accent);
+  white-space: nowrap; /* 👈 ЗАПРЕЩАЕМ ПЕРЕНОС */
+  flex-shrink: 0; /* 👈 ЗАПРЕЩАЕМ СЖИМАТЬСЯ */
+}
+
+/* 📱 Адаптация для маленьких экранов - УМЕНЬШАЕМ ШРИФТ */
+@media (max-width: 380px) {
+  .statusBadge {
+    padding: 4px 10px;
+    font-size: 11px; /* 👈 УМЕНЬШАЕМ */
+  }
+  
+  .daysBadge {
+    padding: 4px 10px;
+    font-size: 11px; /* 👈 УМЕНЬШАЕМ */
+  }
+}
+
+/* 📱 Для экранов 340px и меньше - ЕЩЁ МЕНЬШЕ */
+@media (max-width: 340px) {
+  .statusBadge {
+    padding: 3px 8px;
+    font-size: 10px; /* 👈 ЕЩЁ МЕНЬШЕ */
+  }
+  
+  .daysBadge {
+    padding: 3px 8px;
+    font-size: 10px; /* 👈 ЕЩЁ МЕНЬШЕ */
+  }
+}
+
+/* 📱 Для экранов 320px - САМЫЙ МАЛЕНЬКИЙ */
+@media (max-width: 320px) {
+  .statusBadge {
+    padding: 3px 6px;
+    font-size: 9px; /* 👈 СОВСЕМ КРОХОТНЫЙ */
+  }
+  
+  .daysBadge {
+    padding: 3px 6px;
+    font-size: 9px; /* 👈 СОВСЕМ КРОХОТНЫЙ */
   }
 }

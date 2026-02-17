@@ -85,6 +85,13 @@ export const api = {
     delete: (id: number) => apiFetch(`/devices/${id}`, { 
       method: 'DELETE' 
     }),
+    replace: (id: number) => apiFetch(`/devices/${id}/replace`, { 
+      method: 'POST' 
+    }),
+    updateName: (id: number, customName: string) => apiFetch(`/devices/${id}/name`, { 
+      method: 'PUT', 
+      body: JSON.stringify({ customName }) 
+    }),
   },
   transactions: {
     getAll: () => apiFetch('/transactions'),

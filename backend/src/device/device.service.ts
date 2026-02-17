@@ -181,4 +181,89 @@ export class DeviceService {
     const user = await this.findUserByUsername(username);
     return this.deleteDevice(deviceId, user.id);
   }
+
+// Добавь эти методы в класс DeviceService
+
+async replaceDeviceByUsername(deviceId: number, username: string) {
+  const user = await this.prisma.user.findFirst({
+    where: { 
+      username: {
+        equals: username,
+        mode: 'insensitive',
+      },
+    },
+  });
+
+  if (!user) throw new NotFoundException(`User @${username} not found`);
+  
+  return this.replaceDevice(deviceId, user.id);
+}
+
+async updateDeviceNameByUsername(deviceId: number, username: string, customName: string) {
+  const user = await this.prisma.user.findFirst({
+    where: { 
+      username: {
+        equals: username,
+        mode: 'insensitive',
+      },
+    },
+  });
+
+  if (!user) throw new NotFoundException(`User @${username} not found`);
+  
+  return this.updateDeviceName(deviceId, user.id, customName);
+}
+
+async replaceDevice(deviceId: number, userId: number) {
+  this.logger.log(`🔄 Replacing device ${deviceId} for user ${userId}`);
+  
+  const device = await this.prisma.device.findFirst({
+    where: { id: deviceId, userId },
+  });
+
+  if (!device) {
+    throw new NotFoundException('Device not found');
+  }
+
+  const updated = await this.prisma.device.update({
+    where: { id: deviceId },
+    data: {
+      configLink: this.generateConfigLink(),
+      updatedAt: new Date(),
+    },
+  });
+
+  this.logger.log(`✅ Device ${deviceId} replaced`);
+
+  return {
+    configLink: updated.configLink,
+  };
+}
+
+async updateDeviceName(deviceId: number, userId: number, customName: string) {
+  this.logger.log(`✏️ Updating device ${deviceId} name to: ${customName}`);
+  
+  const device = await this.prisma.device.findFirst({
+    where: { id: deviceId, userId },
+  });
+
+  if (!device) {
+    throw new NotFoundException('Device not found');
+  }
+
+  const updated = await this.prisma.device.update({
+    where: { id: deviceId },
+    data: {
+      customName,
+      updatedAt: new Date(),
+    },
+  });
+
+  this.logger.log(`✅ Device ${deviceId} name updated`);
+
+  return {
+    customName: updated.customName,
+  };
+}
+
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Headers, UnauthorizedException } from '@nestjs/common'; // 👈 ДОБАВИЛИ Put
 import { DeviceService } from './device.service';
 
 @Controller('devices')
@@ -27,5 +27,27 @@ export class DeviceController {
   ) {
     if (!username) throw new UnauthorizedException('Username required');
     return this.deviceService.deleteDeviceByUsername(parseInt(id), username);
+  }
+
+  // ✅ ИСПРАВЛЕННЫЙ МЕТОД ДЛЯ ЗАМЕНЫ ССЫЛКИ
+  @Post(':id/replace')
+  async replaceDevice(
+    @Headers('x-username') username: string,
+    @Param('id') id: string
+  ) {
+    if (!username) throw new UnauthorizedException('Username required');
+    return this.deviceService.replaceDeviceByUsername(parseInt(id), username);
+  }
+
+  // ✅ ИСПРАВЛЕННЫЙ МЕТОД ДЛЯ ОБНОВЛЕНИЯ ИМЕНИ
+  @Put(':id/name')
+  async updateDeviceName(
+    @Headers('x-username') username: string,
+    @Param('id') id: string,
+    @Body('customName') customName: string
+  ) {
+    if (!username) throw new UnauthorizedException('Username required');
+    if (!customName) throw new UnauthorizedException('customName required');
+    return this.deviceService.updateDeviceNameByUsername(parseInt(id), username, customName);
   }
 }

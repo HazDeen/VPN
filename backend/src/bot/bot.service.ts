@@ -7,7 +7,6 @@ import * as bcrypt from 'bcrypt';
 export class BotService implements OnModuleInit, OnModuleDestroy {
   private bot: Telegraf;
   private readonly logger = new Logger(BotService.name);
-  // Хранилище временных состояний (ожидание ввода пароля)
   private waitingForPassword = new Map<number, string>();
 
   constructor(private prisma: PrismaService) {
@@ -184,100 +183,64 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
     });
 
     // ==========================================
-    // КОМАНДА /admin - ССЫЛКА НА АДМИН-ПАНЕЛЬ
-    // ==========================================
-    this.bot.command('admin', async (ctx) => {
-      try {
-        const telegramId = ctx.from.id;
-        
-        const user = await this.prisma.user.findUnique({
-          where: { telegramId: BigInt(telegramId) },
-        });
+// КОМАНДА /admin - ССЫЛКА НА АДМИН-ПАНЕЛЬ
+// ==========================================
+this.bot.command('admin', async (ctx) => {
+  try {
+    const telegramId = ctx.from.id;
+    
+    const user = await this.prisma.user.findUnique({
+      where: { telegramId: BigInt(telegramId) },
+    });
 
-        if (!user) {
-          await ctx.reply('❌ Ты ещё не зарегистрирован. Напиши /start');
-          return;
+    if (!user) {
+      await ctx.reply('❌ Ты ещё не зарегистрирован. Напиши /start');
+      return;
+    }
+
+    if (!user.isAdmin) {
+      await ctx.reply('⛔ У тебя нет прав администратора');
+      return;
+    }
+
+    const adminUrl = 'https://hazdeen.github.io/VPN/#/admin';
+    
+    await ctx.reply(
+      `🔑 Админ-панель\n\nПерейди по ссылке для управления пользователями:`,
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ 
+              text: '⚙️ Открыть админ-панель', 
+              url: adminUrl 
+            }]
+          ]
         }
-
-        if (!user.isAdmin) {
-          await ctx.reply('⛔ У тебя нет прав администратора');
-          return;
-        }
-
-        const adminUrl = 'https://hazdeen.github.io/VPN/#/admin';
-        
-        await ctx.reply(
-          `🔑 Админ-панель\n\nПерейди по ссылке для управления пользователями:`,
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [{ 
-                  text: '⚙️ Открыть админ-панель', 
-                  url: adminUrl 
-                }]
-              ]
-            }
-          }
-        );
-      } catch (error) {
-        const err = error as Error;
-        this.logger.error(`❌ Ошибка /admin: ${err.message}`);
       }
-    });
+    );
+  } catch (error) {
+    const err = error as Error;
+    this.logger.error(`❌ Ошибка /admin: ${err.message}`);
+  }
+});
 
-    // ==========================================
-    // КОМАНДА /balance - ПРОВЕРКА БАЛАНСА
-    // ==========================================
-    this.bot.command('balance', async (ctx) => {
-      try {
-        const telegramId = ctx.from.id;
-        
-        const user = await this.prisma.user.findUnique({
-          where: { telegramId: BigInt(telegramId) },
-        });
-
-        if (!user) {
-          await ctx.reply('❌ Ты ещё не зарегистрирован. Напиши /start');
-          return;
-        }
-
-        const activeDevices = await this.prisma.device.count({
-          where: {
-            userId: user.id,
-            isActive: true,
-          },
-        });
-
-        const dailyRate = activeDevices * 10;
-        const daysLeft = dailyRate > 0 ? Math.floor(Number(user.balance) / dailyRate) : 30;
-
-        await ctx.reply(
-          `💰 Твой баланс: ${user.balance} ₽\n` +
-          `📱 Активных устройств: ${activeDevices}\n` +
-          `⏳ Хватит на ~${daysLeft > 30 ? 30 : daysLeft} дней`
-        );
-      } catch (error) {
-        const err = error as Error;
-        this.logger.error(`❌ Ошибка /balance: ${err.message}`);
-      }
-    });
-
-    // ==========================================
-    // КОМАНДА /help - СПРАВКА
-    // ==========================================
-    this.bot.command('help', async (ctx) => {
-      await ctx.reply(
-        `📚 Доступные команды:\n\n` +
-        `/start - Начать работу\n` +
-        `/setpass - Установить пароль\n` +
-        `/resetpass - Сбросить пароль\n` +
-        `/balance - Проверить баланс\n` +
-        `/admin - Админ-панель (только для админов)\n` +
-        `/help - Показать это сообщение`
-      );
-    });
+// ==========================================
+// КОМАНДА /help - СПРАВКА
+// ==========================================
+this.bot.command('help', async (ctx) => {
+  await ctx.reply(
+    `📚 Доступные команды:\n\n` +
+    `/start - Начать работу\n` +
+    `/setpass - Установить пароль\n` +
+    `/resetpass - Сбросить пароль\n` +
+    `/balance - Проверить баланс\n` +
+    `/admin - Админ-панель (только для админов)\n` +
+    `/help - Показать это сообщение`
+  );
+});
   }
 
+  // ✅ ДОБАВЛЯЕМ ЭТОТ МЕТОД!
   async onModuleDestroy() {
     this.logger.log('🛑 Останавливаем бота...');
     try {
@@ -287,4 +250,4 @@ export class BotService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(`❌ Ошибка при остановке бота: ${error.message}`);
     }
   }
-}
+} // 👈 ЗАКРЫВАЮЩАЯ СКОБКА КЛАССА
