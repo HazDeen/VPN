@@ -8,6 +8,7 @@ import { TransactionModule } from './transaction/transaction.module';
 import { LoggerModule } from './logger/logger.module';
 import { BotModule } from './bot/bot.module';
 import { AdminModule } from './admin/admin.module';
+import { XuiModule } from './xui/xui.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AdminModule } from './admin/admin.module';
     LoggerModule,
     BotModule,
     AdminModule,
+    XuiModule,
   ],
 })
 export class AppModule {}
