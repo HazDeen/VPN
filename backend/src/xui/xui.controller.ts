@@ -1,5 +1,5 @@
 // src/xui/xui.controller.ts
-import { Controller, Post, Body, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Logger, HttpException, HttpStatus, Get } from '@nestjs/common';
 import { XuiApiService } from './xui-api.service';
 
 @Controller('xui')
@@ -8,17 +8,18 @@ export class XuiController {
 
   constructor(private xuiApiService: XuiApiService) {}
 
+  @Get('health')
+  health() {
+    return { status: 'ok', timestamp: new Date().toISOString() };
+  }
+
   @Post('client')
   async createClient(@Body() body: any) {
-    this.logger.log('📝 Запрос на создание клиента');
+    this.logger.log('📝 Запрос на создание клиента:', body);
 
     try {
-      // Проверяем обязательные поля
-      if (!body.tgUid) {
-        throw new Error('tgUid обязателен');
-      }
-      if (!body.email) {
-        throw new Error('email обязателен');
+      if (!body.tgUid || !body.email) {
+        throw new Error('tgUid и email обязательны');
       }
 
       const result = await this.xuiApiService.createClient({
@@ -32,15 +33,13 @@ export class XuiController {
 
       return {
         success: true,
-        message: '✅ Клиент успешно создан в 3x-ui',
         data: result
       };
-
     } catch (error) {
-      this.logger.error('❌ Ошибка создания клиента:', error);
+      this.logger.error('❌ Ошибка:', error);
       throw new HttpException({
         success: false,
-        message: error.message || 'Ошибка создания клиента в 3x-ui'
+        message: error.message
       }, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
