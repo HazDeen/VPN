@@ -1,11 +1,10 @@
-// src/xui/xui.module.ts
 import { Module } from '@nestjs/common';
-import { XuiService } from './xui.service';
-import { XuiController } from './xui.controller'; // Добавить
+import { XuiController } from './xui.controller';
+import { XuiApiService } from './xui-api.service';
 
 @Module({
-  controllers: [XuiController], // Добавить
-  providers: [XuiService],
-  exports: [XuiService],
+  controllers: [XuiController],
+  providers: [XuiApiService],
+  exports: [XuiApiService],
 })
 export class XuiModule {}
