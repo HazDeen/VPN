@@ -1,6 +1,6 @@
-// src/xui/xui.controller.ts
+// backend/src/xui/xui.controller.ts
 import { Controller, Post, Body, Logger, HttpException, HttpStatus, Get } from '@nestjs/common';
-import { XuiApiService } from './xui-api.service';
+import { XuiApiService, CreateClientDto } from './xui-api.service';
 
 @Controller('xui')
 export class XuiController {
@@ -10,11 +10,31 @@ export class XuiController {
 
   @Get('health')
   health() {
-    return { status: 'ok', timestamp: new Date().toISOString() };
+    return { 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      service: 'XUI Controller'
+    };
+  }
+
+  @Get('inbounds')
+  async getInbounds() {
+    try {
+      const inbounds = await this.xuiApiService.getInbounds();
+      return {
+        success: true,
+        data: inbounds
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   }
 
   @Post('client')
-  async createClient(@Body() body: any) {
+  async createClient(@Body() body: CreateClientDto) {
     this.logger.log('📝 Запрос на создание клиента:', body);
 
     try {
@@ -27,12 +47,14 @@ export class XuiController {
         tgUid: body.tgUid,
         email: body.email,
         flow: body.flow || 'xtls-rprx-vision',
-        totalGb: body.totalGb,
-        expiryTime: body.expiryTime
+        totalGb: body.totalGb || 100*1024*1024*1024,
+        expiryTime: body.expiryTime || Date.now() + 30 * 24 * 60 * 60 * 1000,
+        comment: body.comment || ''
       });
 
       return {
         success: true,
+        message: '✅ Клиент успешно создан',
         data: result
       };
     } catch (error) {
@@ -44,48 +66,17 @@ export class XuiController {
     }
   }
 
-  @Get('debug/test-connection')
-  async testConnection() {
-    try {
-      // Попробуем просто достучаться до панели
-      const response = await fetch('http://171.22.16.17:2053');
-      return { 
-        success: true, 
-        status: response.status,
-        statusText: response.statusText 
-      };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error.message,
-        code: error.code 
-      };
-    }
+  @Post('test-add-device')
+  async testAddDevice(@Body() body: any) {
+    // Тестовый эндпоинт для отладки
+    return {
+      success: true,
+      data: {
+        email: body.email || 'test@user.com',
+        subscriptionUrl: `https://test-vpn.com/sub/${Date.now()}`,
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        traffic: body.totalGb || 100*1024*1024*1024
+      }
+    };
   }
-
-  @Post('debug/create-test')
-  async debugCreate(@Body() body: any) {
-    try {
-      const result = await this.xuiApiService.createClient(body);
-      return result;
-    } catch (error) {
-      return { 
-        error: true, 
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      };
-    }
-  }
-
-  @Get('inbounds')
-  async getInbounds() {
-    try {
-      const result = await this.xuiApiService['getInbounds']?.();
-      return result || { message: 'Метод не реализован' };
-    } catch (error) {
-      return { error: error.message };
-    }
-  }
-
 }

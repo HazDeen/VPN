@@ -1,3 +1,4 @@
+// backend/src/xui/xui.module.ts
 import { Module } from '@nestjs/common';
 import { XuiController } from './xui.controller';
 import { XuiApiService } from './xui-api.service';
