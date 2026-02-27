@@ -204,4 +204,182 @@ export class XuiApiService implements OnModuleInit {
       return [];
     }
   }
+
+  async deleteClientByUuid(inboundId: number, clientUuid: string) {
+    try {
+      if (!this.isLoggedIn) {
+        await this.login();
+      }
+
+      const url = `/panel/inbound/${inboundId}/delClient/${clientUuid}`;
+      
+      this.logger.log(`🗑️ Удаление клиента: ${url}`);
+
+      const response = await this.api.post(url, null, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        }
+      });
+
+      this.logger.log(`📥 Статус удаления: ${response.status}`);
+      this.logger.log(`📥 Ответ:`, response.data);
+
+      if (response.status === 200) {
+        this.logger.log(`✅ Клиент ${clientUuid} удалён`);
+        return { success: true };
+      } else {
+        throw new Error('Ошибка удаления клиента');
+      }
+    } catch (error) {
+      this.logger.error(`❌ Ошибка удаления:`, error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  async getUserDevices(tgUid: string) {
+    try {
+      if (!this.isLoggedIn) {
+        await this.login();
+      }
+
+      const response = await this.api.post('/xui/API/inbounds/list');
+      
+      if (!response.data?.success) {
+        return [];
+      }
+
+      const devices = [];
+      
+      for (const inbound of response.data.obj) {
+        if (inbound.clientStats) {
+          for (const client of inbound.clientStats) {
+            // Проверяем, начинается ли email с tgUid
+            if (client.email && client.email.startsWith(`${tgUid}-`)) {
+              // Получаем полные настройки клиента из settings
+              const settings = JSON.parse(inbound.settings || '{}');
+              const clientSettings = settings.clients?.find(c => c.id === client.id) || {};
+              
+              devices.push({
+                id: client.id,
+                uuid: client.id,
+                email: client.email,
+                name: clientSettings.comment || client.email.split('-')[1] || 'Устройство',
+                type: clientSettings.comment?.split(':')[0] || 'Other',
+                model: clientSettings.comment?.split(':')[1]?.trim() || '',
+                subscriptionUrl: await this.getSubscriptionLink(client.email),
+                expiryTime: client.expiryTime,
+                totalGB: client.totalGB,
+                up: client.up,
+                down: client.down,
+                enable: client.enable,
+                inboundId: inbound.id
+              });
+            }
+          }
+        }
+      }
+      
+      return devices;
+    } catch (error) {
+      this.logger.error('❌ Ошибка получения устройств:', error);
+      return [];
+    }
+  }
+
+  async updateClientComment(inboundId: number, clientUuid: string, comment: string) {
+    try {
+      if (!this.isLoggedIn) {
+        await this.login();
+      }
+
+      // Сначала получаем текущие настройки клиента
+      const listResponse = await this.api.post('/xui/API/inbounds/list');
+      const inbound = listResponse.data.obj.find((i: any) => i.id === inboundId);
+      
+      if (!inbound) {
+        throw new Error('Inbound не найден');
+      }
+
+      const settings = JSON.parse(inbound.settings);
+      const clientIndex = settings.clients.findIndex((c: any) => c.id === clientUuid);
+      
+      if (clientIndex === -1) {
+        throw new Error('Клиент не найден');
+      }
+
+      // Обновляем комментарий
+      settings.clients[clientIndex].comment = comment;
+
+      // Отправляем обновление
+      const formBody = new URLSearchParams({
+        id: inboundId.toString(),
+        settings: JSON.stringify(settings)
+      }).toString();
+
+      const response = await this.api.post('/panel/inbound/updateClient', formBody, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        }
+      });
+
+      return response.data;
+    } catch (error) {
+      this.logger.error('❌ Ошибка обновления комментария:', error);
+      throw error;
+    }
+  }
+
+  async replaceClientLink(inboundId: number, clientUuid: string) {
+    try {
+      if (!this.isLoggedIn) {
+        await this.login();
+      }
+
+      // Получаем текущие настройки
+      const listResponse = await this.api.post('/xui/API/inbounds/list');
+      const inbound = listResponse.data.obj.find((i: any) => i.id === inboundId);
+      
+      if (!inbound) {
+        throw new Error('Inbound не найден');
+      }
+
+      const settings = JSON.parse(inbound.settings);
+      const clientIndex = settings.clients.findIndex((c: any) => c.id === clientUuid);
+      
+      if (clientIndex === -1) {
+        throw new Error('Клиент не найден');
+      }
+
+      // Генерируем новый subId
+      const newSubId = this.generateSubId();
+      settings.clients[clientIndex].subId = newSubId;
+
+      // Отправляем обновление
+      const formBody = new URLSearchParams({
+        id: inboundId.toString(),
+        settings: JSON.stringify(settings)
+      }).toString();
+
+      const response = await this.api.post('/panel/inbound/updateClient', formBody, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        }
+      });
+
+      // Формируем новую ссылку
+      const subPort = process.env.SUB_PORT || 443;
+      const subPath = process.env.SUB_PATH || '/sub/';
+      const baseUrl = this.panelUrl.replace(/:\d+$/, '');
+      const newSubscriptionUrl = `${baseUrl}:${subPort}${subPath}${newSubId}`;
+
+      return {
+        newSubscriptionUrl,
+        newSubId
+      };
+    } catch (error) {
+      this.logger.error('❌ Ошибка замены ссылки:', error);
+      throw error;
+    }
+  } 
+  
 }
