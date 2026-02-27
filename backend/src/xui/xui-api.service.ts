@@ -40,15 +40,6 @@ export class XuiApiService implements OnModuleInit {
         password: this.password
       };
 
-      // Если есть 2FA, генерируем код
-      if (this.totpSecret) {
-        const speakeasy = require('speakeasy');
-        loginData.code = speakeasy.totp({
-          secret: this.totpSecret,
-          encoding: 'base32'
-        });
-      }
-
       // Отправляем запрос на вход
       const response = await this.api.post('/login', loginData);
 
