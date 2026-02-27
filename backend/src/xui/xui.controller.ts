@@ -68,4 +68,14 @@ export class XuiController {
     return this.xuiApiService.testLogin();
   }
 
+  @Get('inbounds')
+  async getInbounds() {
+    try {
+      const result = await this.xuiApiService['getInbounds']?.();
+      return result || { message: 'Метод не реализован' };
+    } catch (error) {
+      return { error: error.message };
+    }
+  }
+
 }
