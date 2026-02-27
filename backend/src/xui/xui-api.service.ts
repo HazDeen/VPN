@@ -13,6 +13,30 @@ export class XuiApiService implements OnModuleInit {
   private readonly username = process.env.XUI_USERNAME || 'api_user';
   private readonly password = process.env.XUI_PASSWORD || 'password';
 
+  async getInbounds() {
+    try {
+      if (!this.isLoggedIn) {
+        await this.login();
+      }
+
+      this.logger.log('📥 Запрос списка inbound');
+      
+      const response = await this.api.post('/xui/API/inbounds/list');
+      
+      this.logger.log(`📥 Статус: ${response.status}`);
+      this.logger.log(`📥 Ответ:`, response.data);
+
+      if (response.data && response.data.success) {
+        return response.data.obj;
+      } else {
+        throw new Error(response.data?.msg || 'Ошибка получения списка inbound');
+      }
+    } catch (error) {
+      this.logger.error('❌ Ошибка получения inbound:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
   async testLogin() {
     try {
       const response = await this.api.post('/login', {
