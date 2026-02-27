@@ -63,10 +63,10 @@ export class XuiController {
     }
   }
 
-  @Get('debug/test-login')
-  async testLogin() {
-    return this.xuiApiService.testLogin();
-  }
+  // @Get('debug/test-login')
+  // async testLogin() {
+  //   return this.xuiApiService.testLogin();
+  // }
 
   @Get('inbounds')
   async getInbounds() {
