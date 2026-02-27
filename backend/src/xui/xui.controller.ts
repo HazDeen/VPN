@@ -63,10 +63,20 @@ export class XuiController {
     }
   }
 
-  // @Get('debug/test-login')
-  // async testLogin() {
-  //   return this.xuiApiService.testLogin();
-  // }
+  @Post('debug/create-test')
+  async debugCreate(@Body() body: any) {
+    try {
+      const result = await this.xuiApiService.createClient(body);
+      return result;
+    } catch (error) {
+      return { 
+        error: true, 
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      };
+    }
+  }
 
   @Get('inbounds')
   async getInbounds() {
