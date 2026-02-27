@@ -43,4 +43,29 @@ export class XuiController {
       }, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  @Get('debug/test-connection')
+  async testConnection() {
+    try {
+      // Попробуем просто достучаться до панели
+      const response = await fetch('http://171.22.16.17:2053');
+      return { 
+        success: true, 
+        status: response.status,
+        statusText: response.statusText 
+      };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error.message,
+        code: error.code 
+      };
+    }
+  }
+
+  @Get('debug/test-login')
+  async testLogin() {
+    return this.xuiApiService.testLogin();
+  }
+
 }

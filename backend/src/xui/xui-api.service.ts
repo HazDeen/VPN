@@ -13,6 +13,25 @@ export class XuiApiService implements OnModuleInit {
   private readonly username = process.env.XUI_USERNAME || 'api_user';
   private readonly password = process.env.XUI_PASSWORD || 'password';
 
+  async testLogin() {
+    try {
+      const response = await this.api.post('/login', {
+        username: this.username,
+        password: this.password
+      });
+      return { 
+        success: true, 
+        hasCookie: !!response.headers['set-cookie'],
+        data: response.data 
+      };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error.response?.data || error.message 
+      };
+    }
+  }
+
   async onModuleInit() {
     await this.login();
   }
