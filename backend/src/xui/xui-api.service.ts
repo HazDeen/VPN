@@ -137,9 +137,9 @@ export class XuiApiService implements OnModuleInit {
 
       const clientConfig = {
         id: inboundId,
-        settings: JSON.stringify({
+        settings: {
           clients: [clientObj]
-        })
+        }
       };
 
       this.logger.log(`📝 Отправка в 3x-ui:`, JSON.stringify(clientConfig, null, 2));
