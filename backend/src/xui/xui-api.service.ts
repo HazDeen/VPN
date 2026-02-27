@@ -75,42 +75,46 @@ export class XuiApiService implements OnModuleInit {
       const fullEmail = `${tgUid}-${email}`;
       const uuid = this.generateUUID();
 
+      // Формируем объект клиента
+      const clientObj: any = {
+        email: fullEmail,
+        flow: flow,
+        id: uuid
+      };
+
+      // 👇 totalGb добавляем КАК ЕСТЬ (в гигабайтах)
+      if (totalGb) {
+        clientObj.totalGB = totalGb; // НЕ умножаем!
+      }
+
+      // expiryTime добавляем если есть
+      if (expiryTime) {
+        clientObj.expiryTime = this.parseExpiryTime(expiryTime);
+      }
+
       const clientConfig = {
         id: inboundId,
         settings: JSON.stringify({
-          clients: [{
-            email: fullEmail,
-            flow: flow,
-            id: uuid,
-            ...(totalGb ? { totalGB: totalGb * 1024 * 1024 * 1024 } : {}),
-            ...(expiryTime ? { expiryTime: this.parseExpiryTime(expiryTime) } : {})
-          }]
+          clients: [clientObj]
         })
       };
 
       this.logger.log(`📝 Отправка в 3x-ui:`, JSON.stringify(clientConfig, null, 2));
 
-      try {
-        const response = await this.api.post('/xui/API/inbounds/addClient', clientConfig);
-        
-        this.logger.log(`📥 Статус ответа: ${response.status}`);
-        this.logger.log(`📥 Ответ от 3x-ui:`, response.data);
+      const response = await this.api.post('/xui/API/inbounds/addClient', clientConfig);
+      
+      this.logger.log(`📥 Ответ от 3x-ui:`, response.data);
 
-        if (response.data?.success) {
-          return {
-            success: true,
-            email: fullEmail,
-            uuid,
-            flow
-          };
-        } else {
-          const errorMsg = response.data?.msg || response.data?.message || 'Неизвестная ошибка 3x-ui';
-          this.logger.error(`❌ 3x-ui вернул ошибку: ${errorMsg}`);
-          throw new Error(errorMsg);
-        }
-      } catch (apiError) {
-        this.logger.error(`❌ API ошибка:`, apiError.response?.data || apiError.message);
-        throw apiError;
+      if (response.data?.success) {
+        return {
+          success: true,
+          email: fullEmail,
+          uuid,
+          flow
+        };
+      } else {
+        const errorMsg = response.data?.msg || response.data?.message || 'Неизвестная ошибка 3x-ui';
+        throw new Error(errorMsg);
       }
     } catch (error) {
       this.logger.error(`❌ Ошибка создания клиента:`, error.response?.data || error.message);
