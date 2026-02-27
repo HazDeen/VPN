@@ -65,24 +65,21 @@ export class XuiApiService implements OnModuleInit {
 
       const { 
         inboundId = 1, 
-        tgUid,                    // 👈 Telegram UID (обязательно)
-        email,                     // 👈 Email клиента (например "client1user")
+        tgUid,
+        email,
         flow = 'xtls-rprx-vision',
         totalGb,
         expiryTime
       } = createClientDto;
 
-      // 👇 ФОРМИРУЕМ EMAIL КАК "tgUid-email"
       const fullEmail = `${tgUid}-${email}`;
-      
-      // 👇 Генерируем UUID
       const uuid = this.generateUUID();
 
       const clientConfig = {
         id: inboundId,
         settings: JSON.stringify({
           clients: [{
-            email: fullEmail,      // 👈 "123456789-client1user"
+            email: fullEmail,
             flow: flow,
             id: uuid,
             ...(totalGb ? { totalGB: totalGb * 1024 * 1024 * 1024 } : {}),
@@ -91,26 +88,32 @@ export class XuiApiService implements OnModuleInit {
         })
       };
 
-      this.logger.log(`📝 Создание клиента: ${fullEmail} (${flow})`);
+      this.logger.log(`📝 Отправка в 3x-ui:`, JSON.stringify(clientConfig, null, 2));
 
-      const response = await this.api.post('/xui/API/inbounds/addClient', clientConfig);
-
-      if (response.data.success) {
-        this.logger.log(`✅ Клиент ${fullEmail} успешно создан`);
+      try {
+        const response = await this.api.post('/xui/API/inbounds/addClient', clientConfig);
         
-        return {
-          success: true,
-          email: fullEmail,
-          uuid,
-          flow,
-          subscriptionUrl: await this.getSubscriptionLink(fullEmail)
-        };
-      } else {
-        throw new Error(response.data.msg || 'Ошибка создания клиента');
-      }
+        this.logger.log(`📥 Статус ответа: ${response.status}`);
+        this.logger.log(`📥 Ответ от 3x-ui:`, response.data);
 
+        if (response.data?.success) {
+          return {
+            success: true,
+            email: fullEmail,
+            uuid,
+            flow
+          };
+        } else {
+          const errorMsg = response.data?.msg || response.data?.message || 'Неизвестная ошибка 3x-ui';
+          this.logger.error(`❌ 3x-ui вернул ошибку: ${errorMsg}`);
+          throw new Error(errorMsg);
+        }
+      } catch (apiError) {
+        this.logger.error(`❌ API ошибка:`, apiError.response?.data || apiError.message);
+        throw apiError;
+      }
     } catch (error) {
-      this.logger.error(`❌ Ошибка создания клиента:`, error.message);
+      this.logger.error(`❌ Ошибка создания клиента:`, error.response?.data || error.message);
       throw error;
     }
   }
