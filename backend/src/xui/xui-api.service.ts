@@ -77,54 +77,63 @@ export class XuiApiService implements OnModuleInit {
         tgUid,
         email,
         flow = 'xtls-rprx-vision',
-        totalGb,
-        expiryTime
+        totalGb = 0,
+        expiryTime,
+        comment = ''
       } = createClientDto;
 
-      // Формируем email как "tgUid-email"
       const fullEmail = `${tgUid}-${email}`;
-      
-      // Генерируем UUID
       const uuid = this.generateUUID();
+      const subId = this.generateSubId(); // генерация как в панели
 
-      // Формируем объект клиента
-      const clientObj: any = {
-        email: fullEmail,
+      // Формируем объект клиента ТОЧНО КАК В ПАНЕЛИ
+      const clientObj = {
+        id: uuid,
         flow: flow,
-        id: uuid
+        email: fullEmail,
+        limitIp: 0,
+        totalGB: totalGb,
+        expiryTime: expiryTime ? this.parseExpiryTime(expiryTime) : 0,
+        enable: true,
+        tgId: "",
+        subId: subId,
+        comment: comment,
+        reset: 0
       };
 
-      // Добавляем totalGB если есть (в гигабайтах, НЕ в байтах)
-      if (totalGb) {
-        clientObj.totalGB = totalGb;
-      }
+      // Создаем settings объект
+      const settingsObj = {
+        clients: [clientObj]
+      };
 
-      // Добавляем expiryTime если есть
-      if (expiryTime) {
-        clientObj.expiryTime = this.parseExpiryTime(expiryTime);
-      }
+      // Кодируем settings в URL-encoded строку
+      const settingsJson = JSON.stringify(settingsObj);
+      
+      // Формируем тело запроса как в панели
+      const formBody = new URLSearchParams({
+        id: inboundId.toString(),
+        settings: settingsJson
+      }).toString();
 
-      // 👇 ВАЖНО: settings - это ОБЪЕКТ, а не строка!
-      const clientConfig = {
-        id: inboundId,
-        settings: {
-          clients: [clientObj]
+      this.logger.log(`📝 Отправка в 3x-ui (form):`, formBody);
+
+      // Отправляем запрос с правильным Content-Type
+      const response = await this.api.post('/panel/inbound/addClient', 
+        formBody,  // тело как строка
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+          }
         }
-      };
-
-      this.logger.log(`📝 Отправка в 3x-ui:`, JSON.stringify(clientConfig, null, 2));
-
-      // Отправляем запрос в панель
-      const response = await this.api.post('/xui/API/inbounds/addClient', clientConfig);
+      );
       
       this.logger.log(`📥 Статус ответа: ${response.status}`);
-      this.logger.log(`📥 Заголовки: ${JSON.stringify(response.headers)}`);
       this.logger.log(`📥 Данные ответа:`, response.data);
 
-      if (response.data?.success) {
+      // Проверяем успех (в этой версии может быть по-другому)
+      if (response.status === 200) {
         this.logger.log(`✅ Клиент ${fullEmail} успешно создан`);
         
-        // Получаем ссылку на подписку
         const subscriptionUrl = await this.getSubscriptionLink(fullEmail);
         
         return {
@@ -135,21 +144,23 @@ export class XuiApiService implements OnModuleInit {
           subscriptionUrl
         };
       } else {
-        const errorMsg = response.data?.msg || response.data?.message || 'Неизвестная ошибка 3x-ui';
-        this.logger.error(`❌ 3x-ui вернул ошибку: ${errorMsg}`);
-        throw new Error(errorMsg);
+        throw new Error('Ошибка создания клиента');
       }
 
     } catch (error) {
-      // 👇 Детальное логирование ошибки
-      this.logger.error(`❌ Полная ошибка создания клиента:`, {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        headers: error.response?.headers
-      });
+      this.logger.error(`❌ Ошибка создания клиента:`, error.response?.data || error.message);
       throw error;
     }
+  }
+
+  // Добавь метод генерации subId
+  private generateSubId(length: number = 16): string {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
   }
 
   async getSubscriptionLink(email: string): Promise<string> {
@@ -235,4 +246,5 @@ export interface CreateClientDto {
   flow?: string;
   totalGb?: number;
   expiryTime?: number | Date | string;
+  comment?: string;
 }
